@@ -11,7 +11,8 @@ from .model import ModuleModel
 
 PYTHON_EXTENSIONS = (".py",)
 TYPESCRIPT_EXTENSIONS = (".ts", ".tsx")
-ALL_EXTENSIONS = PYTHON_EXTENSIONS + TYPESCRIPT_EXTENSIONS
+PRISMA_EXTENSIONS = (".prisma",)
+ALL_EXTENSIONS = PYTHON_EXTENSIONS + TYPESCRIPT_EXTENSIONS + PRISMA_EXTENSIONS
 
 
 def build_modules(files: Dict[str, str]) -> Dict[str, ModuleModel]:
@@ -30,6 +31,12 @@ def build_modules(files: Dict[str, str]) -> Dict[str, ModuleModel]:
         from .ts_client import extract_modules
         modules.update(extract_modules(ts_files))
 
+    prisma_files = {p: s for p, s in files.items() if p.endswith(PRISMA_EXTENSIONS)}
+    if prisma_files:
+        from .prisma_extractor import extract_prisma
+        for path, source in prisma_files.items():
+            modules[path] = extract_prisma(path, source)
+
     return modules
 
 
@@ -39,4 +46,5 @@ def extensions_for(langs: List[str]) -> tuple:
         exts.extend(PYTHON_EXTENSIONS)
     if "typescript" in langs:
         exts.extend(TYPESCRIPT_EXTENSIONS)
+    exts.extend(PRISMA_EXTENSIONS)
     return tuple(exts) if exts else ALL_EXTENSIONS

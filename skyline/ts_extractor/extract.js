@@ -8,6 +8,7 @@
 // shape each object mirrors) to stdout.
 'use strict';
 
+const crypto = require('crypto');
 const ts = require('typescript');
 
 function readStdin() {
@@ -108,6 +109,11 @@ function bodyComplexity(node) {
   return computeComplexity(node);
 }
 
+function bodyHash(node) {
+  if (!node.body) return null;
+  return crypto.createHash('sha256').update(node.body.getText()).digest('hex');
+}
+
 function extractMembers(members) {
   const out = {};
   for (const m of members) {
@@ -116,6 +122,7 @@ function extractMembers(members) {
     let returnType = null;
     let name = null;
     let complexity = null;
+    let bodyHashValue = null;
     const optional = !!m.questionToken;
 
     if (ts.isMethodDeclaration(m) || ts.isMethodSignature(m)) {
@@ -124,11 +131,13 @@ function extractMembers(members) {
       params = paramList(m.parameters);
       returnType = m.type ? m.type.getText() : null;
       complexity = bodyComplexity(m);
+      bodyHashValue = bodyHash(m);
     } else if (ts.isConstructorDeclaration(m)) {
       kind = 'method';
       name = 'constructor';
       params = paramList(m.parameters);
       complexity = bodyComplexity(m);
+      bodyHashValue = bodyHash(m);
     } else if (ts.isPropertyDeclaration(m) || ts.isPropertySignature(m)) {
       kind = 'property';
       name = m.name ? m.name.getText() : '(anonymous)';
@@ -138,11 +147,13 @@ function extractMembers(members) {
       name = m.name.getText();
       returnType = m.type ? m.type.getText() : null;
       complexity = bodyComplexity(m);
+      bodyHashValue = bodyHash(m);
     } else if (ts.isSetAccessor(m)) {
       kind = 'method';
       name = m.name.getText();
       params = paramList(m.parameters);
       complexity = bodyComplexity(m);
+      bodyHashValue = bodyHash(m);
     } else {
       continue;
     }
@@ -155,6 +166,7 @@ function extractMembers(members) {
       return_type: returnType,
       optional,
       complexity,
+      body_hash: bodyHashValue,
     };
   }
   return out;
@@ -172,6 +184,19 @@ function extractHeritage(node) {
   return relations;
 }
 
+function extractImports(sf) {
+  const specs = [];
+  for (const node of sf.statements) {
+    const specifier = node.moduleSpecifier;
+    const isImport = ts.isImportDeclaration(node);
+    const isReexport = ts.isExportDeclaration(node) && !!specifier;
+    if ((isImport || isReexport) && specifier && ts.isStringLiteral(specifier)) {
+      if (!specs.includes(specifier.text)) specs.push(specifier.text);
+    }
+  }
+  return specs;
+}
+
 function extractFile(path, source) {
   const scriptKind = path.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
   const sf = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, scriptKind);
@@ -187,6 +212,7 @@ function extractFile(path, source) {
       return_type: node.type ? node.type.getText() : null,
       exported: isExported(node),
       complexity: bodyComplexity(node),
+      body_hash: bodyHash(node),
     };
   }
 
@@ -224,13 +250,14 @@ function extractFile(path, source) {
             return_type: init.type ? init.type.getText() : null,
             exported,
             complexity: bodyComplexity(init),
+            body_hash: bodyHash(init),
           };
         }
       }
     }
   }
 
-  return { path, language: 'typescript', types, functions, imports: [] };
+  return { path, language: 'typescript', types, functions, imports: extractImports(sf) };
 }
 
 async function main() {

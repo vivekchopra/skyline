@@ -72,6 +72,8 @@ def _to_member(data: dict) -> Member:
         return_type=data.get("return_type"),
         optional=data.get("optional", False),
         complexity=data.get("complexity"),
+        body_hash=data.get("body_hash"),
+        exported="private" not in data.get("modifiers", []),
     )
 
 
@@ -97,7 +99,9 @@ def _to_module(data: dict) -> ModuleModel:
             return_type=fn.get("return_type"),
             exported=fn.get("exported", True),
             complexity=fn.get("complexity"),
+            body_hash=fn.get("body_hash"),
         )
+    module.imports = list(data.get("imports") or [])
     return module
 
 

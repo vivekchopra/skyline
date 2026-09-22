@@ -31,6 +31,25 @@ def changed_source_files(repo: str, base: str, head: str, extensions: Sequence[s
     return [line.strip() for line in out.splitlines() if line.strip()]
 
 
+def rev_parse(repo: str, ref: str) -> str:
+    return _run(repo, ["rev-parse", ref]).strip()
+
+
+def list_tracked_source_files(repo: str, ref: str, extensions: Sequence[str]) -> List[str]:
+    """Source files tracked at ``ref``.
+
+    ``git ls-tree`` lists the committed tree, so gitignored files that were
+    never added are absent. That is the gitignore-aware file set at a ref.
+    """
+    out = _run(repo, ["ls-tree", "-r", "--name-only", ref])
+    paths = []
+    for line in out.splitlines():
+        path = line.strip()
+        if path and any(path.endswith(ext) for ext in extensions):
+            paths.append(path)
+    return paths
+
+
 def list_files_at_ref(repo: str, ref: str, paths: List[str]) -> Dict[str, str]:
     """{path: source} for each path that exists at ref.
 
