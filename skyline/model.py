@@ -28,6 +28,8 @@ class Member:
     return_type: Optional[str] = None
     optional: bool = False
     complexity: Optional[int] = None  # cyclomatic complexity; None for signature-only members (e.g. interface methods)
+    body_hash: Optional[str] = None  # hash of the unit's own body; None when there is no body
+    exported: bool = True  # public-name heuristic: leading "_" is internal; dunder methods stay public
 
 
 @dataclass
@@ -40,6 +42,7 @@ class FunctionEntity:
     return_type: Optional[str] = None
     exported: bool = True
     complexity: Optional[int] = None
+    body_hash: Optional[str] = None
 
 
 @dataclass
@@ -55,9 +58,27 @@ class TypeEntity:
 
 
 @dataclass
+class Column:
+    """A declared column on a Django, SQLAlchemy, or Prisma model."""
+    name: str
+    type: Optional[str] = None
+
+
+@dataclass
+class Table:
+    """A declared table. This is the data-model view, not the class diagram."""
+    name: str
+    qualname: str
+    path: str
+    columns: Dict[str, Column] = field(default_factory=dict)
+    relations: List[str] = field(default_factory=list)
+
+
+@dataclass
 class ModuleModel:
     path: str
-    language: str  # "python" | "typescript"
+    language: str  # "python" | "typescript" | "prisma"
     types: Dict[str, TypeEntity] = field(default_factory=dict)
     functions: Dict[str, FunctionEntity] = field(default_factory=dict)
     imports: List[str] = field(default_factory=list)
+    tables: Dict[str, Table] = field(default_factory=dict)

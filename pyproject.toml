@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [{name = "skyline contributors"}]
+dependencies = ["tomli>=1.1.0; python_version < '3.11'"]
 keywords = ["code-review", "uml", "pull-request", "static-analysis", "ast", "typescript", "crap-score"]
 classifiers = [
     "Development Status :: 3 - Alpha",
