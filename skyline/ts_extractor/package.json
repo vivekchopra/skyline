@@ -1,0 +1,10 @@
+{
+  "name": "skyline-ts-extractor",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Bundled structural-extraction sidecar for skyline's TypeScript support.",
+  "main": "extract.js",
+  "dependencies": {
+    "typescript": "^5.4.0"
+  }
+}

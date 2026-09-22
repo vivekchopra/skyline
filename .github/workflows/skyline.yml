@@ -1,0 +1,43 @@
+name: Skyline
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  skyline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # full history needed so the base ref is available for diffing
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Needed only if the PR touches TypeScript files; skyline uses the
+      # real TypeScript compiler API to parse .ts/.tsx (see README).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install skyline
+        run: pip install .
+
+      - name: Generate structural diff report
+        run: |
+          skyline diff \
+            --repo . \
+            --base "origin/${{ github.base_ref }}" \
+            --head "${{ github.sha }}" \
+            --out skyline_report.html
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: skyline-report
+          path: skyline_report.html
+
+      # Next step: sticky PR comment (see docs/plan.md). Artifact stays the full SVG report.

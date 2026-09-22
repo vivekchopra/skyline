@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "skyline"
+version = "0.1.0"
+description = "See how a change shapes the design, not just the lines."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "skyline contributors"}]
+keywords = ["code-review", "uml", "pull-request", "static-analysis", "ast", "typescript", "crap-score"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Documentation",
+]
+
+[project.urls]
+Homepage = "https://github.com/vivekchopra/skyline"
+Issues = "https://github.com/vivekchopra/skyline/issues"
+
+[project.scripts]
+skyline = "skyline.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+include = ["skyline*"]
+
+[tool.setuptools.package-data]
+skyline = ["ts_extractor/*.js", "ts_extractor/*.json"]
