@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "skyline"
+name = "skyline-review"
 version = "0.1.0"
 description = "See how a change shapes the design, not just the lines."
 readme = "README.md"
