@@ -12,8 +12,10 @@ The question that matters for a PR like that isn't "is this line correct," it's 
 
 Skyline diffs a PR structurally instead of textually: classes and interfaces added, removed, or changed, what they now extend or implement, and a CRAP score on anything complex and new. Point it at a base and head ref and it draws the diagram of that change on the as-built map of the whole tree. Give it a layering policy and it flags what breaks it: a new class in the wrong package, a dependency pointing the wrong way.
 
+The PyPI package is `skyline-review`. The command is still `skyline`.
+
 ```
-pip install skyline
+pip install skyline-review
 skyline diff --repo . --base main --head my-feature-branch
 ```
 
@@ -91,7 +93,7 @@ Keys are `"<file path>::<ClassName>.<memberName>"` for class or interface member
 
 TypeScript parsing shells out to a small bundled Node.js script that uses the actual `typescript` npm package's compiler API, the same parser `tsc` uses, rather than a hand-rolled regex parser, which would break on anything beyond trivial syntax (generics, decorators, overloads, arrow functions as class fields, JSX, and so on).
 
-Requirements: **Node.js 18+** and **npm** on `PATH`. `pip install skyline` itself stays dependency-free for the TypeScript compiler; the first time you analyze a `.ts`/`.tsx` file, skyline runs `npm install typescript` once into `~/.cache/skyline/ts_extractor/` (a few seconds, one-time). Delete that directory to force a clean reinstall, for example after a skyline upgrade.
+Requirements: **Node.js 18+** and **npm** on `PATH`. `pip install skyline-review` itself stays dependency-free for the TypeScript compiler; the first time you analyze a `.ts`/`.tsx` file, skyline runs `npm install typescript` once into `~/.cache/skyline/ts_extractor/` (a few seconds, one-time). Delete that directory to force a clean reinstall, for example after a skyline upgrade.
 
 Known limitations for TypeScript:
 - Type resolution isn't performed (this is a syntax-only parse of each file, not a full program compile), so a method signature diff compares the type text as written, not resolved or aliased types.
