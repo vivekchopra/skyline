@@ -24,7 +24,7 @@ skyline demo --lang typescript
 
 ## Credit
 
-The CRAP score, and the idea of overlaying a risk score directly on a structural diagram, is influence by Robert C. Martin's (unclebob's) **[uml-viewer](https://github.com/unclebob/uml-viewer)** and **[crap4clj](https://github.com/unclebob/crap4clj)**, which do this for Clojure codebases with considerably more sophistication (he also integrates mutation-testing scores, live-update from a running companion agent, and paints an actual navigable UML diagram rather than a diff view). Skyline borrows the formula and the "missing coverage counts as the worst case, not unknown" philosophy from his README. It is not affiliated with that project in any form, and if you're working in Clojure and want the full picture (a live map of the whole repo, not a PR overlay), use his tools directly!
+The CRAP score, and the idea of overlaying a risk score directly on a structural diagram, is influence by Robert C. Martin's (unclebob's) **[uml-viewer](https://github.com/unclebob/uml-viewer)** and **[crap4clj](https://github.com/unclebob/crap4clj)**, which do this for Clojure codebases with considerably more sophistication (he also integrates mutation-testing scores, live-update from a running companion agent, and paints an actual navigable UML diagram rather than a diff view). Skyline borrows the formula and the "missing coverage counts as the worst case, not unknown" philosophy from his README. This project is not affiliated with unclebob's projects in any form, and if you're working in Clojure and want the full picture (a live map of the whole repo, not a PR overlay), use his tools directly!
 
 ## Why not just read the diff?
 
@@ -101,14 +101,17 @@ It doesn't auto-ingest coverage.py or Istanbul output (missing coverage stays 0%
 ## Usage
 
 ```
-skyline diff --repo <path> --base <ref> --head <ref> [--out report.html] [--comment skyline_comment.md] [--lang python typescript] [--coverage map.json] [--policy skyline.policy.toml] [--fail-on-violation]
+skyline diff --repo <path> --base <ref> --head <ref> [--out report.html] [--format html|json] [--emit-prompt review.md] [--prompt-template path.md] [--comment skyline_comment.md] [--lang python typescript] [--coverage map.json] [--policy skyline.policy.toml] [--fail-on-violation]
 skyline snapshot --repo <path> --ref HEAD [--out-dir .skyline] [--render]
 ```
 
 - `--repo`: path to the git repository (default: current directory)
 - `--base`: the PR's target branch, e.g. `main`, `origin/main`
 - `--head`: the PR's branch, e.g. `HEAD`, a branch name, a commit SHA. A branch that is not checked out locally, but exists on exactly one remote, is read from that remote-tracking ref (`origin/my-feature-branch`). If several remotes have it, pass the remote-tracking name.
-- `--out`: output HTML file path (default: `skyline_report.html`)
+- `--out`: output file path (default: `skyline_report.html`). The extension does not choose the renderer
+- `--format`: `html` (default) or `json`. JSON is the structural model only. See [JSON schema](docs/json-schema.md)
+- `--emit-prompt`: write one markdown file for an agent. Builds the JSON even when `--format` is `html`. Does not require `--out`
+- `--prompt-template`: template for `--emit-prompt`. Default is `skyline/prompts/review.md`, which must contain `{{SKYLINE_DATA}}`
 - `--comment`: also write the markdown PR comment
 - `--lang`: one or more of `python`, `typescript` (default: both, whichever files are present). `.prisma` files are read either way
 - `--coverage`: optional path to a coverage map JSON file (see [Coverage input](#coverage-input)); without it, every method or function is scored assuming 0% coverage
@@ -129,6 +132,12 @@ skyline_report.html
 Commit `.skyline/model.json` only when you want that snapshot to show up in the pull request as a lockfile. `skyline.policy.toml` stays committed either way.
 
 Internally `diff` still uses git's three-dot range (`base...head`) for what counts as the PR, the same range GitHub shows, so the overlay is what the PR introduced relative to its merge-base, not unrelated drift on `main`. The maps underneath that overlay are the whole tree at each ref.
+
+### AI-assisted review
+
+`--format json` writes the same sections as the HTML report: stats, violations, types, functions, breaking changes (with dependents), the full CRAP list, coupling, untested new types, and the data model. The HTML risk strip stays a short summary. The field list is [docs/json-schema.md](docs/json-schema.md).
+
+`--emit-prompt review.md` writes a prompt with that JSON substituted at `{{SKYLINE_DATA}}`. Copy `skyline/prompts/review.md` and pass it with `--prompt-template` when a repo wants its own ranking. A template without the marker fails the run. Both flags can be used in one command. The workflow in this repo does not post the prompt file yet.
 
 ### Policy
 
@@ -183,6 +192,8 @@ The codebase is small and split by concern:
 | `skyline/review.py` | ADR 0001 review order: violations, breaking changes, CRAP, coupling, untested types |
 | `skyline/render_svg.py` | Overlay and data-model SVG |
 | `skyline/render_html.py` | Those diagrams plus the text report |
+| `skyline/render_json.py` | The same report as JSON, with the full CRAP list |
+| `skyline/render_prompt.py` | Substitutes that JSON into a prompt template |
 | `skyline/render_mermaid.py` | Lossy Mermaid for the PR comment and `snapshot --render` |
 | `skyline/render_markdown.py` | Sticky-comment markdown |
 | `skyline/cli.py` | `skyline diff`, `skyline snapshot`, `skyline demo` |
@@ -191,7 +202,7 @@ Adding a language means writing one more extractor that produces `model.ModuleMo
 
 ## Roadmap
 
-Off this plan, later: auto-ingested coverage maps, mutation scores, more languages, TypeScript `type` / `enum` / namespaces, rename matching, SQL migration parsers, and a reusable marketplace Action once the in-repo comment path has been used for real.
+JSON export and prompt bundling are in the CLI ([ADR 0003](docs/adr/0003-json-export-and-prompt-bundling.md)). Off this plan, later: auto-ingested coverage maps, mutation scores, more languages, TypeScript `type` / `enum` / namespaces, rename matching, SQL migration parsers, posting the prompt file from CI, and a reusable marketplace Action once the in-repo comment path has been used for real.
 
 ## License
 
