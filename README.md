@@ -24,7 +24,7 @@ skyline demo --lang typescript
 
 ## Credit
 
-The CRAP score, and the idea of overlaying a risk score directly on a structural diagram, is influence by Robert C. Martin's (unclebob's) **[uml-viewer](https://github.com/unclebob/uml-viewer)** and **[crap4clj](https://github.com/unclebob/crap4clj)**, which do this for Clojure codebases with considerably more sophistication (he also integrates mutation-testing scores, live-update from a running companion agent, and paints an actual navigable UML diagram rather than a diff view). Skyline borrows the formula and the "missing coverage counts as the worst case, not unknown" philosophy from his README. It is not affiliated with that project in any form, and if you're working in Clojure and want the full picture (a live map of the whole repo, not a PR overlay), use his tools directly!
+The CRAP score, and the idea of overlaying a risk score directly on a structural diagram, is influence by Robert C. Martin's (unclebob's) **[uml-viewer](https://github.com/unclebob/uml-viewer)** and **[crap4clj](https://github.com/unclebob/crap4clj)**, which do this for Clojure codebases with considerably more sophistication (he also integrates mutation-testing scores, live-update from a running companion agent, and paints an actual navigable UML diagram rather than a diff view). Skyline borrows the formula and the "missing coverage counts as the worst case, not unknown" philosophy from his README. This project is not affiliated with unclebob's projects in any form, and if you're working in Clojure and want the full picture (a live map of the whole repo, not a PR overlay), use his tools directly!
 
 ## Why not just read the diff?
 
