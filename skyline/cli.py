@@ -13,6 +13,7 @@ from .languages import build_modules, extensions_for
 from .policy import find_violations, load_policy
 from .render_html import build_html_report
 from .render_json import render_json
+from .render_prompt import load_template, render_prompt
 from .render_markdown import render_comment
 from .review import build_review
 from .snapshot import load_cached_map, save_cached_map, write_snapshot
@@ -70,6 +71,18 @@ def cmd_diff(args: argparse.Namespace) -> int:
 
     with open(args.out, "w", encoding="utf-8") as f:
         f.write(report)
+    if getattr(args, "emit_prompt", None):
+        try:
+            bundled = render_prompt(
+                diff, args.base, args.head, review,
+                load_template(args.prompt_template or ""),
+            )
+        except (ValueError, OSError) as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        Path(args.emit_prompt).write_text(bundled, encoding="utf-8")
+        print(f"Wrote {args.emit_prompt}")
+
     if args.comment:
         Path(args.comment).write_text(
             render_comment(
@@ -222,6 +235,15 @@ def main(argv=None) -> int:
     p_diff.add_argument(
         "--format", choices=["html", "json"], default="html",
         help="Report renderer (default: html). json is the structural model only.",
+    )
+    p_diff.add_argument(
+        "--emit-prompt", default=None, metavar="PATH",
+        help="Write a prompt file with the JSON model substituted. Does not require --format json.",
+    )
+    p_diff.add_argument(
+        "--prompt-template", default=None,
+        help="Markdown template for --emit-prompt. Default: skyline/prompts/review.md. "
+             "Must contain {{SKYLINE_DATA}}.",
     )
     p_diff.add_argument(
         "--comment", default=None,
