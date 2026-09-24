@@ -1,6 +1,6 @@
 # Plan: implement Skyline (map, policy, overlay)
 
-This is the **only** implementation plan. It makes [ADR 0001](adr/0001-map-policy-overlay.md) and [ADR 0002](adr/0002-cli-ci-skill.md) true.
+This is the **only** implementation plan. It makes [ADR 0001](adr/0001-map-policy-overlay.md), [ADR 0002](adr/0002-cli-ci-skill.md), and [ADR 0003](adr/0003-json-export-and-prompt-bundling.md) true.
 
 It folds the unimplemented 2026-09-20 “PR review signals” plan (body-delta, qualname boxes, coupling, review chips, PR comment, skill) plus the architecture-drift vision (snapshot, policy, overlay, data-model view).
 
@@ -178,6 +178,20 @@ After step 4 this resolver runs against the **full** as-built file set, not only
 - Triggers: review this PR, snapshot the architecture, check design/risk before opening a PR.
 - Run `skyline snapshot` / `skyline diff … --comment …` from this checkout.
 - Report in ADR 0001 review order. Do not skip the CLI.
+
+## 11. JSON export and prompt bundling
+
+**Why.** The skill hands the structural model to an agent. [ADR 0003](adr/0003-json-export-and-prompt-bundling.md): `--format json` and `--emit-prompt` are separate flags. The prompt is a file the repo can replace, like `skyline.policy.toml`.
+
+**Code**
+
+- [`skyline/render_json.py`](../skyline/render_json.py): same diff the HTML report uses. Full CRAP list, not the top-five summary.
+- CLI `--format {html,json}`. The flag chooses the renderer. The `--out` extension does not.
+- [`skyline/prompts/review.md`](../skyline/prompts/review.md): default template. One `{{SKYLINE_DATA}}` marker.
+- [`skyline/render_prompt.py`](../skyline/render_prompt.py): always builds the JSON, substitutes the template, fails if the marker is missing.
+- CLI `--emit-prompt out.md` and `--prompt-template path.md`. Works without `--format` or `--out`.
+
+**Not in this step.** No workflow change. No new violation rules.
 
 ## Suggested notes while in the files anyway
 
