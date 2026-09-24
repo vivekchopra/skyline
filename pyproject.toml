@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "skyline-review"
-version = "0.1.0"
+version = "0.1.1"
 description = "See how a change shapes the design, not just the lines."
 readme = "README.md"
 requires-python = ">=3.9"
