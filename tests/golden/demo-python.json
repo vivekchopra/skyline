@@ -1,0 +1,317 @@
+{
+  "base": "before",
+  "breaking": [
+    {
+      "end_line": 19,
+      "line": 7,
+      "path": "payments.py",
+      "side": "head",
+      "text": "breaking class payments.py::PaymentProcessor"
+    },
+    {
+      "end_line": 10,
+      "line": 8,
+      "path": "payments.py",
+      "side": "head",
+      "text": "breaking payments.py::PaymentProcessor.__init__: signature; body changed"
+    },
+    {
+      "end_line": 13,
+      "line": 12,
+      "path": "payments.py",
+      "side": "head",
+      "text": "breaking payments.py::PaymentProcessor.charge: signature; body changed"
+    },
+    {
+      "end_line": 16,
+      "line": 15,
+      "path": "payments.py",
+      "side": "head",
+      "text": "breaking payments.py::PaymentProcessor.refund: signature; body changed"
+    },
+    {
+      "end_line": 28,
+      "line": 27,
+      "path": "payments.py",
+      "side": "head",
+      "text": "breaking payments.py::validate_amount: signature"
+    }
+  ],
+  "coupling": [],
+  "data_model": [],
+  "functions": [
+    {
+      "crap": {
+        "band": "low",
+        "complexity": 1,
+        "coverage": 0.0,
+        "coverage_supplied": false,
+        "label": "CRAP 2",
+        "value": 2.0
+      },
+      "end_line": 28,
+      "line": 27,
+      "name": "validate_amount",
+      "path": "payments.py",
+      "qualname": "payments.py::validate_amount",
+      "reason": "params (amount) \u2192 (amount, currency)",
+      "status": "modified"
+    }
+  ],
+  "head": "after",
+  "risk": [
+    {
+      "crap": {
+        "band": "low",
+        "complexity": 1,
+        "coverage": 0.0,
+        "coverage_supplied": false,
+        "label": "CRAP 2",
+        "value": 2.0
+      },
+      "end_line": 4,
+      "line": 3,
+      "name": "payments.py::BaseProcessor.log",
+      "path": "payments.py"
+    },
+    {
+      "crap": {
+        "band": "low",
+        "complexity": 1,
+        "coverage": 0.0,
+        "coverage_supplied": false,
+        "label": "CRAP 2",
+        "value": 2.0
+      },
+      "end_line": 10,
+      "line": 8,
+      "name": "payments.py::PaymentProcessor.__init__",
+      "path": "payments.py"
+    },
+    {
+      "crap": {
+        "band": "low",
+        "complexity": 1,
+        "coverage": 0.0,
+        "coverage_supplied": false,
+        "label": "CRAP 2",
+        "value": 2.0
+      },
+      "end_line": 13,
+      "line": 12,
+      "name": "payments.py::PaymentProcessor.charge",
+      "path": "payments.py"
+    },
+    {
+      "crap": {
+        "band": "low",
+        "complexity": 1,
+        "coverage": 0.0,
+        "coverage_supplied": false,
+        "label": "CRAP 2",
+        "value": 2.0
+      },
+      "end_line": 16,
+      "line": 15,
+      "name": "payments.py::PaymentProcessor.refund",
+      "path": "payments.py"
+    },
+    {
+      "crap": {
+        "band": "low",
+        "complexity": 1,
+        "coverage": 0.0,
+        "coverage_supplied": false,
+        "label": "CRAP 2",
+        "value": 2.0
+      },
+      "end_line": 19,
+      "line": 18,
+      "name": "payments.py::PaymentProcessor.status",
+      "path": "payments.py"
+    },
+    {
+      "crap": {
+        "band": "low",
+        "complexity": 1,
+        "coverage": 0.0,
+        "coverage_supplied": false,
+        "label": "CRAP 2",
+        "value": 2.0
+      },
+      "end_line": 24,
+      "line": 23,
+      "name": "payments.py::RecurringPaymentProcessor.charge_monthly",
+      "path": "payments.py"
+    },
+    {
+      "crap": {
+        "band": "low",
+        "complexity": 1,
+        "coverage": 0.0,
+        "coverage_supplied": false,
+        "label": "CRAP 2",
+        "value": 2.0
+      },
+      "end_line": 28,
+      "line": 27,
+      "name": "payments.py::validate_amount",
+      "path": "payments.py"
+    }
+  ],
+  "stats": {
+    "functions_added": 0,
+    "functions_modified": 1,
+    "functions_removed": 0,
+    "members_added": 3,
+    "members_modified": 3,
+    "members_removed": 0,
+    "types_added": 2,
+    "types_modified": 1,
+    "types_removed": 0
+  },
+  "types": [
+    {
+      "added_relations": [],
+      "end_line": 4,
+      "kind": "class",
+      "line": 2,
+      "members": [
+        {
+          "crap": {
+            "band": "low",
+            "complexity": 1,
+            "coverage": 0.0,
+            "coverage_supplied": false,
+            "label": "CRAP 2",
+            "value": 2.0
+          },
+          "end_line": 4,
+          "line": 3,
+          "name": "log",
+          "reason": "",
+          "status": "added"
+        }
+      ],
+      "name": "BaseProcessor",
+      "path": "payments.py",
+      "qualname": "payments.py::BaseProcessor",
+      "reason": "",
+      "removed_relations": [],
+      "status": "added"
+    },
+    {
+      "added_relations": [
+        {
+          "kind": "extends",
+          "target": "BaseProcessor"
+        }
+      ],
+      "end_line": 19,
+      "kind": "class",
+      "line": 7,
+      "members": [
+        {
+          "crap": {
+            "band": "low",
+            "complexity": 1,
+            "coverage": 0.0,
+            "coverage_supplied": false,
+            "label": "CRAP 2",
+            "value": 2.0
+          },
+          "end_line": 10,
+          "line": 8,
+          "name": "__init__",
+          "reason": "params (self, gateway) \u2192 (self, gateway, retries); body changed",
+          "status": "modified"
+        },
+        {
+          "crap": {
+            "band": "low",
+            "complexity": 1,
+            "coverage": 0.0,
+            "coverage_supplied": false,
+            "label": "CRAP 2",
+            "value": 2.0
+          },
+          "end_line": 13,
+          "line": 12,
+          "name": "charge",
+          "reason": "params (self, amount) \u2192 (self, amount, currency); body changed",
+          "status": "modified"
+        },
+        {
+          "crap": {
+            "band": "low",
+            "complexity": 1,
+            "coverage": 0.0,
+            "coverage_supplied": false,
+            "label": "CRAP 2",
+            "value": 2.0
+          },
+          "end_line": 16,
+          "line": 15,
+          "name": "refund",
+          "reason": "params (self, amount) \u2192 (self, amount, currency); body changed",
+          "status": "modified"
+        },
+        {
+          "crap": {
+            "band": "low",
+            "complexity": 1,
+            "coverage": 0.0,
+            "coverage_supplied": false,
+            "label": "CRAP 2",
+            "value": 2.0
+          },
+          "end_line": 19,
+          "line": 18,
+          "name": "status",
+          "reason": "",
+          "status": "added"
+        }
+      ],
+      "name": "PaymentProcessor",
+      "path": "payments.py",
+      "qualname": "payments.py::PaymentProcessor",
+      "reason": "",
+      "removed_relations": [],
+      "status": "modified"
+    },
+    {
+      "added_relations": [],
+      "end_line": 24,
+      "kind": "class",
+      "line": 22,
+      "members": [
+        {
+          "crap": {
+            "band": "low",
+            "complexity": 1,
+            "coverage": 0.0,
+            "coverage_supplied": false,
+            "label": "CRAP 2",
+            "value": 2.0
+          },
+          "end_line": 24,
+          "line": 23,
+          "name": "charge_monthly",
+          "reason": "",
+          "status": "added"
+        }
+      ],
+      "name": "RecurringPaymentProcessor",
+      "path": "payments.py",
+      "qualname": "payments.py::RecurringPaymentProcessor",
+      "reason": "",
+      "removed_relations": [],
+      "status": "added"
+    }
+  ],
+  "untested": [
+    "payments.py::BaseProcessor",
+    "payments.py::RecurringPaymentProcessor"
+  ],
+  "violations": []
+}
