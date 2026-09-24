@@ -1,0 +1,38 @@
+import json
+import subprocess
+from pathlib import Path
+
+from skyline.cli import main
+from skyline.demo_samples import PY_AFTER, PY_BEFORE
+
+_GOLDEN = Path(__file__).parent / "golden" / "demo-python.json"
+
+
+def _git(repo: Path, *args):
+    subprocess.run(
+        ["git", "-c", "user.email=test@example.com", "-c", "user.name=test", *args],
+        cwd=repo, check=True, capture_output=True, text=True,
+    )
+
+
+def test_diff_format_json_matches_demo_golden(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-b", "main")
+    (repo / "payments.py").write_text(PY_BEFORE, encoding="utf-8")
+    _git(repo, "add", "payments.py")
+    _git(repo, "commit", "-m", "before")
+    (repo / "payments.py").write_text(PY_AFTER, encoding="utf-8")
+    _git(repo, "add", "payments.py")
+    _git(repo, "commit", "-m", "after")
+    out = tmp_path / "report.json"
+    rc = main([
+        "diff", "--repo", str(repo), "--base", "HEAD~1", "--head", "HEAD",
+        "--format", "json", "--out", str(out),
+    ])
+    assert rc == 0
+    data = json.loads(out.read_text(encoding="utf-8"))
+    golden = json.loads(_GOLDEN.read_text(encoding="utf-8"))
+    assert data["stats"] == golden["stats"]
+    assert [row["crap"] for row in data["risk"]] == [row["crap"] for row in golden["risk"]]
+    assert [row["name"] for row in data["risk"]] == [row["name"] for row in golden["risk"]]
