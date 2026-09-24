@@ -6,6 +6,7 @@ import html
 
 from .diff import ModelDiff
 from .render_svg import build_data_svg, build_diagram_svg
+from .review import HOW_TO_REVIEW
 
 STATUS_LABEL = {"added": "Added", "removed": "Removed", "modified": "Modified"}
 STATUS_COLOR = {"added": "#2e7d32", "removed": "#c62828", "modified": "#e65100"}
@@ -150,11 +151,16 @@ def build_html_report(diff: ModelDiff, base_ref: str, head_ref: str, repo_label:
   .footer a {{ color: #888; }}
   .chip {{ display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 8px; background: #eceff1; color: #37474f; font-size: 11px; }}
   .risk {{ margin-top: 0; }}
+  .guide {{ max-width: 760px; margin: 12px 0 20px; padding-left: 18px; }}
+  .guide li {{ font-size: 13px; margin: 4px 0; color: #333; }}
 </style>
 </head>
 <body>
   <h1>Skyline</h1>
   <div class="sub">{_esc(repo_label)} &nbsp;\u00b7&nbsp; <code>{_esc(base_ref)}</code> \u2192 <code>{_esc(head_ref)}</code></div>
+  <ul class="guide">
+    {"".join(f"<li>{_esc(line)}</li>" for line in HOW_TO_REVIEW)}
+  </ul>
 
   <div class="legend">
     <span><i class="swatch" style="background:#2e7d32"></i>added</span>
@@ -195,9 +201,6 @@ def build_html_report(diff: ModelDiff, base_ref: str, head_ref: str, repo_label:
   </div>
 
   <p class="footer">
-    CRAP (Change Risk Anti-Patterns) score = complexity\u00b2 \u00d7 (1 \u2212 coverage)\u00b3 + complexity.
-    Shown on added/modified methods and functions only. Coverage not supplied for this run is
-    treated as 0% (worst case), not "unknown."
     This scoring approach, and the idea of overlaying it directly on a structural diagram, is
     inspired by Robert&nbsp;C.&nbsp;Martin's
     <a href="https://github.com/unclebob/uml-viewer" target="_blank" rel="noopener">uml-viewer</a>

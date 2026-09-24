@@ -16,6 +16,15 @@ from typing import Dict, List
 _BODY_ONLY = ("body changed",)
 _TOP_N = 5
 
+HOW_TO_REVIEW = (
+    "Policy violations first: new dependencies skyline.policy.toml forbids. Nothing listed means this change is allowed, or the repo has no policy.",
+    "Then breaking public signatures, inheritance, and schema.",
+    "Then CRAP on added or modified methods and functions: complexity\u00b2 \u00d7 (1 \u2212 coverage)\u00b3 + complexity. \u22645 low, \u226410 moderate, \u226430 high, >30 severe. No coverage file counts as 0%. A high score means complex and untested. It does not fail the review by itself.",
+    "Then new imports that are allowed. A thicker arrow is a two-way import.",
+    "Then new types whose names do not appear in a changed test file.",
+    "Green is added, red removed, orange modified, grey an unchanged neighbor. The diagram is that neighborhood, not the whole repo. The second diagram is tables and columns.",
+)
+
 
 @dataclass
 class Review:

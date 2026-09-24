@@ -7,6 +7,7 @@ review order, then Mermaid.
 from __future__ import annotations
 
 from .render_mermaid import coupling_mermaid, data_mermaid, diff_class_mermaid
+from .review import HOW_TO_REVIEW
 
 MARKER = "<!-- skyline-report -->"
 
@@ -19,7 +20,11 @@ def render_comment(diff, review, base_ref: str, head_ref: str) -> str:
         "",
         f"`{base_ref}` \u2192 `{head_ref}`",
         "",
+        "How to review:",
+        "",
     ]
+    lines.extend(f"- {line}" for line in HOW_TO_REVIEW)
+    lines.append("")
     if review is not None and review.caption:
         lines.append(review.caption)
         lines.append("")

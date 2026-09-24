@@ -20,5 +20,7 @@ def test_comment_has_marker_and_violation_heading():
     review = build_review(diff, {}, {})
     text = render_comment(diff, review, "main", "head")
     assert MARKER in text
+    assert "How to review:" in text
+    assert text.index("How to review:") < text.index("### Policy violations")
     assert "### Policy violations" in text
     assert text.index("### Policy violations") < text.index("### Overlay")
