@@ -12,6 +12,7 @@ from .git_utils import changed_source_files, list_files_at_ref, list_tracked_sou
 from .languages import build_modules, extensions_for
 from .policy import find_violations, load_policy
 from .render_html import build_html_report
+from .render_json import render_json
 from .render_markdown import render_comment
 from .review import build_review
 from .snapshot import load_cached_map, save_cached_map, write_snapshot
@@ -59,10 +60,13 @@ def cmd_diff(args: argparse.Namespace) -> int:
     crap.annotate(diff, coverage_map)
     review = build_review(diff, base_sources, head_sources)
     remote = origin_url(args.repo)
-    report = build_html_report(
-        diff, args.base, args.head, repo_label=args.repo, policy=policy, review=review,
-        remote=remote, base_sha=base_sha, head_sha=head_sha,
-    )
+    if args.format == "json":
+        report = render_json(diff, args.base, args.head, review)
+    else:
+        report = build_html_report(
+            diff, args.base, args.head, repo_label=args.repo, policy=policy, review=review,
+            remote=remote, base_sha=base_sha, head_sha=head_sha,
+        )
 
     with open(args.out, "w", encoding="utf-8") as f:
         f.write(report)
@@ -214,7 +218,11 @@ def main(argv=None) -> int:
         help="Head ref, e.g. the PR branch or HEAD. "
              "A name that exists on exactly one remote is read from that remote-tracking ref.",
     )
-    p_diff.add_argument("--out", default="skyline_report.html", help="Output HTML file path.")
+    p_diff.add_argument("--out", default="skyline_report.html", help="Output file path. The format flag chooses the renderer, not this extension.")
+    p_diff.add_argument(
+        "--format", choices=["html", "json"], default="html",
+        help="Report renderer (default: html). json is the structural model only.",
+    )
     p_diff.add_argument(
         "--comment", default=None,
         help="Also write a markdown PR comment (violations, review order, Mermaid).",
