@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 _BODY_ONLY = ("body changed",)
 _TOP_N = 5
@@ -27,10 +27,20 @@ HOW_TO_REVIEW = (
 
 
 @dataclass
+class Finding:
+    """One review row. ``side`` is the commit the link should open."""
+    text: str
+    path: str = ""
+    line: Optional[int] = None
+    end_line: Optional[int] = None
+    side: str = "head"
+
+
+@dataclass
 class Review:
     caption: str
-    breaking: List[str] = field(default_factory=list)
-    risks: List[str] = field(default_factory=list)
+    breaking: List[Finding] = field(default_factory=list)
+    risks: List[Finding] = field(default_factory=list)
     coupling: List[str] = field(default_factory=list)
     untested: List[str] = field(default_factory=list)
     chips: Dict[str, List[str]] = field(default_factory=dict)
@@ -84,6 +94,30 @@ def _fan_in_by_file(diff) -> Dict[str, int]:
     return counts
 
 
+def _short_reason(reason: str) -> str:
+    """Keep the list readable. The link opens the signature itself."""
+    parts = []
+    for part in reason.split(";"):
+        part = part.strip()
+        if not part:
+            continue
+        if part.startswith("params "):
+            parts.append("signature")
+        elif part.startswith("return type "):
+            parts.append("return type")
+        elif part.startswith("modifiers "):
+            parts.append("modifiers")
+        else:
+            parts.append(part)
+    return "; ".join(parts)
+
+
+def _span(unit) -> tuple:
+    if unit is None:
+        return None, None
+    return getattr(unit, "line", None), getattr(unit, "end_line", None)
+
+
 def _dependent_clause(path: str, fan_in: Dict[str, int]) -> str:
     count = fan_in.get(path, 0)
     if count <= 0:
@@ -96,14 +130,18 @@ def _file_of(qualname: str) -> str:
     return qualname.split("::", 1)[0]
 
 
-def _breaking(diff) -> List[str]:
+def _breaking(diff) -> List[Finding]:
     fan_in = _fan_in_by_file(diff)
     ranked = []
     order = 0
 
-    def add(path: str, line: str) -> None:
+    def add(path: str, text: str, unit=None, side: str = "head") -> None:
         nonlocal order
-        ranked.append((fan_in.get(path, 0), order, line + _dependent_clause(path, fan_in)))
+        line, end_line = _span(unit)
+        ranked.append((
+            fan_in.get(path, 0), order,
+            Finding(text + _dependent_clause(path, fan_in), path, line, end_line, side),
+        ))
         order += 1
 
     for type_change in diff.types:
@@ -111,27 +149,32 @@ def _breaking(diff) -> List[str]:
             continue
         path = _file_of(type_change.qualname)
         if type_change.status == "removed":
-            add(path, f"removed {type_change.kind} {type_change.qualname}")
+            add(path, f"removed {type_change.kind} {type_change.qualname}", type_change, "base")
         elif type_change.added_relations or type_change.removed_relations or not _is_body_only(type_change.reason):
             if type_change.status == "modified":
-                add(path, f"breaking {type_change.kind} {type_change.qualname}")
+                add(path, f"breaking {type_change.kind} {type_change.qualname}", type_change)
         for member in type_change.members:
             unit = member.after or member.before
             if unit is None or not unit.exported:
                 continue
+            side = "base" if member.status == "removed" else "head"
             if member.status == "removed":
-                add(path, f"removed {type_change.qualname}.{member.name}")
+                add(path, f"removed {type_change.qualname}.{member.name}", unit, side)
             elif member.status == "modified" and not _is_body_only(member.reason):
-                add(path, f"breaking {type_change.qualname}.{member.name}: {member.reason}")
+                why = _short_reason(member.reason)
+                suffix = f": {why}" if why else ""
+                add(path, f"breaking {type_change.qualname}.{member.name}{suffix}", member.after or unit)
     for fn in diff.functions:
         unit = fn.after or fn.before
         if unit is None or not unit.exported:
             continue
         path = _file_of(fn.qualname)
         if fn.status == "removed":
-            add(path, f"removed {fn.qualname}")
+            add(path, f"removed {fn.qualname}", unit, "base")
         elif fn.status == "modified" and not _is_body_only(fn.reason):
-            add(path, f"breaking {fn.qualname}: {fn.reason}")
+            why = _short_reason(fn.reason)
+            suffix = f": {why}" if why else ""
+            add(path, f"breaking {fn.qualname}{suffix}", fn.after or unit)
     for table in diff.tables:
         if table.status == "removed":
             add("", f"removed table {table.qualname}")
@@ -141,22 +184,27 @@ def _breaking(diff) -> List[str]:
             elif column.status == "modified":
                 add("", f"breaking column {table.qualname}.{column.name}")
     ranked.sort(key=lambda item: (-item[0], item[1]))
-    return [line for _, _, line in ranked]
+    return [item for _, _, item in ranked]
 
 
-def _risks(diff) -> List[str]:
+def _risks(diff) -> List[Finding]:
     scored = []
     for type_change in diff.types:
         for member in type_change.members:
             if member.crap is None or member.status not in ("added", "modified"):
                 continue
-            scored.append((member.crap.value, f"{type_change.qualname}.{member.name}", member.crap.label()))
+            unit = member.after or member.before
+            line, end_line = _span(unit)
+            text = f"{type_change.qualname}.{member.name} {member.crap.label()}"
+            scored.append((member.crap.value, Finding(text, type_change.path, line, end_line)))
     for fn in diff.functions:
         if fn.crap is None or fn.status not in ("added", "modified"):
             continue
-        scored.append((fn.crap.value, fn.qualname, fn.crap.label()))
+        unit = fn.after or fn.before
+        line, end_line = _span(unit)
+        scored.append((fn.crap.value, Finding(f"{fn.qualname} {fn.crap.label()}", fn.path, line, end_line)))
     scored.sort(key=lambda item: item[0], reverse=True)
-    return [f"{name} {label}" for _, name, label in scored[:_TOP_N]]
+    return [item for _, item in scored[:_TOP_N]]
 
 
 def _legal_coupling(diff) -> List[str]:

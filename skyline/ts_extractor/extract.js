@@ -109,12 +109,18 @@ function bodyComplexity(node) {
   return computeComplexity(node);
 }
 
+function span(sf, node) {
+  const start = ts.getLineAndCharacterOfPosition(sf, node.getStart(sf));
+  const end = ts.getLineAndCharacterOfPosition(sf, node.getEnd());
+  return { line: start.line + 1, end_line: end.line + 1 };
+}
+
 function bodyHash(node) {
   if (!node.body) return null;
   return crypto.createHash('sha256').update(node.body.getText()).digest('hex');
 }
 
-function extractMembers(members) {
+function extractMembers(sf, members) {
   const out = {};
   for (const m of members) {
     let kind = null;
@@ -167,6 +173,7 @@ function extractMembers(members) {
       optional,
       complexity,
       body_hash: bodyHashValue,
+      ...span(sf, m),
     };
   }
   return out;
@@ -213,6 +220,7 @@ function extractFile(path, source) {
       exported: isExported(node),
       complexity: bodyComplexity(node),
       body_hash: bodyHash(node),
+      ...span(sf, node),
     };
   }
 
@@ -223,8 +231,9 @@ function extractFile(path, source) {
         kind: 'class',
         decorators: decoratorList(node),
         relations: extractHeritage(node),
-        members: extractMembers(node.members),
+        members: extractMembers(sf, node.members),
         exported: isExported(node),
+        ...span(sf, node),
       };
     } else if (ts.isInterfaceDeclaration(node)) {
       types[node.name.text] = {
@@ -232,8 +241,9 @@ function extractFile(path, source) {
         kind: 'interface',
         decorators: [],
         relations: extractHeritage(node),
-        members: extractMembers(node.members),
+        members: extractMembers(sf, node.members),
         exported: isExported(node),
+        ...span(sf, node),
       };
     } else if (ts.isFunctionDeclaration(node) && node.name) {
       addFunction(node, node.name.text);
@@ -251,6 +261,7 @@ function extractFile(path, source) {
             exported,
             complexity: bodyComplexity(init),
             body_hash: bodyHash(init),
+            ...span(sf, decl),
           };
         }
       }

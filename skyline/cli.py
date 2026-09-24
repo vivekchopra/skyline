@@ -8,13 +8,13 @@ from pathlib import Path
 from typing import Optional, TextIO
 
 from .diff import diff_models
-from .git_utils import changed_source_files, list_files_at_ref, list_tracked_source_files, resolve_ref
+from .git_utils import changed_source_files, list_files_at_ref, list_tracked_source_files, origin_url, resolve_ref, rev_parse
 from .languages import build_modules, extensions_for
 from .policy import find_violations, load_policy
 from .render_html import build_html_report
 from .render_markdown import render_comment
 from .review import build_review
-from .snapshot import extract_ref, load_fresh_snapshot, write_snapshot
+from .snapshot import load_cached_map, save_cached_map, write_snapshot
 from . import crap
 
 
@@ -30,12 +30,16 @@ def cmd_diff(args: argparse.Namespace) -> int:
             args.head = _use_ref(args.repo, args.head)
             status.update(f"Listing changes {args.base}...{args.head}")
             changed = changed_source_files(args.repo, args.base, args.head, extensions)
-            base_modules, base_sources = _modules_for_diff(
-                args.repo, args.base, extensions, snapshot_dir, status,
+            base_sha = rev_parse(args.repo, args.base)
+            head_sha = rev_parse(args.repo, args.head)
+            base_modules = _modules_for_diff(
+                args.repo, args.base, base_sha, extensions, snapshot_dir, status,
             )
-            head_modules, head_sources = _modules_for_diff(
-                args.repo, args.head, extensions, snapshot_dir, status,
+            head_modules = _modules_for_diff(
+                args.repo, args.head, head_sha, extensions, snapshot_dir, status,
             )
+            base_sources = list_files_at_ref(args.repo, args.base, changed)
+            head_sources = list_files_at_ref(args.repo, args.head, changed)
             status.update("Comparing maps")
         except Exception as exc:  # ToolingError etc. -- surface a clean message, not a traceback
             status.clear()
@@ -54,15 +58,20 @@ def cmd_diff(args: argparse.Namespace) -> int:
     coverage_map = crap.load_coverage_map(args.coverage)
     crap.annotate(diff, coverage_map)
     review = build_review(diff, base_sources, head_sources)
+    remote = origin_url(args.repo)
     report = build_html_report(
         diff, args.base, args.head, repo_label=args.repo, policy=policy, review=review,
+        remote=remote, base_sha=base_sha, head_sha=head_sha,
     )
 
     with open(args.out, "w", encoding="utf-8") as f:
         f.write(report)
     if args.comment:
         Path(args.comment).write_text(
-            render_comment(diff, review, args.base, args.head), encoding="utf-8",
+            render_comment(
+                diff, review, args.base, args.head,
+                remote=remote, base_sha=base_sha, head_sha=head_sha,
+            ), encoding="utf-8",
         )
         print(f"Wrote {args.comment}")
 
@@ -109,13 +118,16 @@ class Status:
             self._width = 0
 
 
-def _modules_for_diff(repo: str, ref: str, extensions, snapshot_dir: str, status: Status):
-    """Full as-built map at ``ref``, plus the sources that map was read from.
+def _modules_for_diff(repo: str, ref: str, sha: str, extensions, snapshot_dir: str, status: Status):
+    """Full as-built map at ``ref``.
 
-    A fresh snapshot supplies the map. The sources are still read once, for
-    the review, and that same read is parsed when no snapshot matches.
+    A map already stored for this commit sha is reused. The sha is the checksum:
+    a new commit misses the cache and is written under ``.skyline/maps/``.
     """
-    loaded = load_fresh_snapshot(repo, ref, snapshot_dir)
+    loaded = load_cached_map(repo, snapshot_dir, sha)
+    if loaded is not None:
+        print(f"No change in {ref} ({sha[:12]}); loading previous run.")
+        return loaded
     paths = list_tracked_source_files(repo, ref, extensions)
     total = len(paths)
 
@@ -125,15 +137,14 @@ def _modules_for_diff(repo: str, ref: str, extensions, snapshot_dir: str, status
     if total == 0:
         status.update(f"Reading {ref}  0 files")
     files = list_files_at_ref(repo, ref, paths, on_file=on_read)
-    if loaded is not None:
-        status.update(f"Using snapshot for {ref}")
-        return loaded, files
 
     def on_parse(done: int, count: int) -> None:
         status.update(f"Parsing {ref}  {done}/{count}")
 
     status.update(f"Parsing {ref}  0/{len(files)}")
-    return build_modules(files, on_file=on_parse), files
+    modules = build_modules(files, on_file=on_parse)
+    save_cached_map(repo, snapshot_dir, ref, sha, modules)
+    return modules
 
 
 def _use_ref(repo: str, ref: str) -> str:

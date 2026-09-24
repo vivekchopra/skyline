@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 
 from .diff import ModelDiff
+from .links import finding_href
 from .render_svg import build_data_svg, build_diagram_svg
 from .review import HOW_TO_REVIEW
 
@@ -98,8 +99,17 @@ def _import_rows(diff: ModelDiff) -> str:
     return "\n".join(rows) if rows else "<li>No resolved import changes.</li>"
 
 
+def _finding_html(item, remote: str, base_sha: str, head_sha: str) -> str:
+    text = getattr(item, "text", str(item))
+    href = finding_href(remote, item, base_sha, head_sha)
+    if not href:
+        return _esc(text)
+    return f'<a href="{_esc(href)}">{_esc(text)}</a>'
+
+
 def build_html_report(diff: ModelDiff, base_ref: str, head_ref: str, repo_label: str = "",
-                      policy=None, review=None) -> str:
+                      policy=None, review=None, remote: str = "",
+                      base_sha: str = "", head_sha: str = "") -> str:
     counts = diff.counts()
     layers = policy.layers if policy is not None else None
     layer_of = policy.layer_for if policy is not None else None
@@ -111,12 +121,16 @@ def build_html_report(diff: ModelDiff, base_ref: str, head_ref: str, repo_label:
     )
     caption = f'<p class="sub">{_esc(review.caption)}</p>' if review is not None else ""
     if review is not None and review.breaking:
-        breaking_items = "".join(f"<li>{_esc(item)}</li>" for item in review.breaking)
+        breaking_items = "".join(
+            f"<li>{_finding_html(item, remote, base_sha, head_sha)}</li>" for item in review.breaking
+        )
         breaking_strip = f"<h2>Breaking</h2><ul>{breaking_items}</ul>"
     else:
         breaking_strip = ""
     if review is not None and review.risks:
-        risk_items = "".join(f"<li>{_esc(item)}</li>" for item in review.risks)
+        risk_items = "".join(
+            f"<li>{_finding_html(item, remote, base_sha, head_sha)}</li>" for item in review.risks
+        )
         risk_strip = f'<h2>Risk</h2><ul class="risk">{risk_items}</ul>'
     else:
         risk_strip = ""

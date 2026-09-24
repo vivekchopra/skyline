@@ -78,6 +78,13 @@ def rev_parse(repo: str, ref: str) -> str:
     return _run(repo, ["rev-parse", ref]).strip()
 
 
+def origin_url(repo: str) -> str:
+    try:
+        return _run(repo, ["remote", "get-url", "origin"]).strip()
+    except RuntimeError:
+        return ""
+
+
 def list_tracked_source_files(repo: str, ref: str, extensions: Sequence[str]) -> List[str]:
     """Source files tracked at ``ref``.
 

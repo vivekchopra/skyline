@@ -226,6 +226,8 @@ def extract_module(path: str, source: str) -> ModuleModel:
                 decorators=_decorator_names(node.decorator_list),
                 relations=[(b, "extends") for b in bases],
                 exported=_exported_name(node.name),
+                line=node.lineno,
+                end_line=node.end_lineno,
             )
             for item in node.body:
                 if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -238,6 +240,8 @@ def extract_module(path: str, source: str) -> ModuleModel:
                         complexity=_complexity(item.body),
                         body_hash=_body_hash(item.body),
                         exported=_exported_name(item.name),
+                        line=item.lineno,
+                        end_line=item.end_lineno,
                     )
             module.types[node.name] = type_entity
             table = _extract_table(path, node, bases)
@@ -254,6 +258,8 @@ def extract_module(path: str, source: str) -> ModuleModel:
                 exported=_exported_name(node.name),
                 complexity=_complexity(node.body),
                 body_hash=_body_hash(node.body),
+                line=node.lineno,
+                end_line=node.end_lineno,
             )
         elif isinstance(node, ast.Import):
             for alias in node.names:

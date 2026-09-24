@@ -26,7 +26,7 @@ def test_round_trip_model_json():
     assert loaded == modules
 
 
-def test_snapshot_includes_file_outside_the_three_dot_diff(tmp_path):
+def test_snapshot_includes_file_outside_the_three_dot_diff(tmp_path, capsys):
     repo = tmp_path / "repo"
     repo.mkdir()
     _git(repo, "init")
@@ -51,3 +51,10 @@ def test_snapshot_includes_file_outside_the_three_dot_diff(tmp_path):
     loaded = load_fresh_snapshot(str(repo), "HEAD", str(out))
     assert loaded is not None
     assert "keep.py" in loaded
+
+    first = main(["diff", "--repo", str(repo), "--base", "HEAD~1", "--head", "HEAD", "--out", str(tmp_path / "a.html")])
+    assert first == 0
+    capsys.readouterr()
+    second = main(["diff", "--repo", str(repo), "--base", "HEAD~1", "--head", "HEAD", "--out", str(tmp_path / "b.html")])
+    assert second == 0
+    assert "loading previous run" in capsys.readouterr().out

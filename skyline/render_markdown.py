@@ -6,13 +6,23 @@ review order, then Mermaid.
 """
 from __future__ import annotations
 
+from .links import finding_href
 from .render_mermaid import coupling_mermaid, data_mermaid, diff_class_mermaid
 from .review import HOW_TO_REVIEW
 
 MARKER = "<!-- skyline-report -->"
 
 
-def render_comment(diff, review, base_ref: str, head_ref: str) -> str:
+def _finding_md(item, remote: str, base_sha: str, head_sha: str) -> str:
+    text = getattr(item, "text", str(item))
+    href = finding_href(remote, item, base_sha, head_sha)
+    if not href:
+        return text
+    return f"[{text}]({href})"
+
+
+def render_comment(diff, review, base_ref: str, head_ref: str,
+                   remote: str = "", base_sha: str = "", head_sha: str = "") -> str:
     lines = [
         MARKER,
         "",
@@ -50,14 +60,14 @@ def render_comment(diff, review, base_ref: str, head_ref: str) -> str:
         lines.append("### Breaking changes")
         lines.append("")
         for item in review.breaking:
-            lines.append(f"- {item}")
+            lines.append(f"- {_finding_md(item, remote, base_sha, head_sha)}")
         lines.append("")
 
     if review is not None and review.risks:
         lines.append("### Risk")
         lines.append("")
         for item in review.risks:
-            lines.append(f"- {item}")
+            lines.append(f"- {_finding_md(item, remote, base_sha, head_sha)}")
         lines.append("")
 
     if review is not None and review.untested:
