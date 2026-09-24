@@ -5,10 +5,11 @@ import argparse
 import sys
 
 from pathlib import Path
+from typing import Optional, TextIO
 
 from .diff import diff_models
-from .git_utils import changed_source_files, list_files_at_ref, list_tracked_source_files
-from .languages import extensions_for
+from .git_utils import changed_source_files, list_files_at_ref, list_tracked_source_files, resolve_ref
+from .languages import build_modules, extensions_for
 from .policy import find_violations, load_policy
 from .render_html import build_html_report
 from .render_markdown import render_comment
@@ -21,19 +22,30 @@ def cmd_diff(args: argparse.Namespace) -> int:
     langs = args.lang if args.lang != ["auto"] else ["python", "typescript"]
     extensions = extensions_for(langs)
 
-    changed = changed_source_files(args.repo, args.base, args.head, extensions)
+    snapshot_dir = getattr(args, "snapshot_dir", ".skyline")
+    status = Status()
+    try:
+        try:
+            args.base = _use_ref(args.repo, args.base)
+            args.head = _use_ref(args.repo, args.head)
+            status.update(f"Listing changes {args.base}...{args.head}")
+            changed = changed_source_files(args.repo, args.base, args.head, extensions)
+            base_modules, base_sources = _modules_for_diff(
+                args.repo, args.base, extensions, snapshot_dir, status,
+            )
+            head_modules, head_sources = _modules_for_diff(
+                args.repo, args.head, extensions, snapshot_dir, status,
+            )
+            status.update("Comparing maps")
+        except Exception as exc:  # ToolingError etc. -- surface a clean message, not a traceback
+            status.clear()
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+    finally:
+        status.clear()
+
     if not changed:
         print(f"No changed files ({', '.join(extensions)}) between the given refs.")
-
-    snapshot_dir = getattr(args, "snapshot_dir", ".skyline")
-    try:
-        base_modules = _modules_for_diff(args.repo, args.base, extensions, snapshot_dir)
-        head_modules = _modules_for_diff(args.repo, args.head, extensions, snapshot_dir)
-        base_sources = _sources_at_ref(args.repo, args.base, extensions)
-        head_sources = _sources_at_ref(args.repo, args.head, extensions)
-    except Exception as exc:  # ToolingError etc. -- surface a clean message, not a traceback
-        print(f"error: {exc}", file=sys.stderr)
-        return 1
 
     diff = diff_models(base_modules, head_modules)
     policy_path = args.policy or str(Path(args.repo) / "skyline.policy.toml")
@@ -69,23 +81,73 @@ def cmd_diff(args: argparse.Namespace) -> int:
     return 0
 
 
-def _sources_at_ref(repo: str, ref: str, extensions):
-    paths = list_tracked_source_files(repo, ref, extensions)
-    return list_files_at_ref(repo, ref, paths)
+class Status:
+    """One rewriting status line on a terminal. A pipe gets one line per phase."""
+
+    def __init__(self, stream: Optional[TextIO] = None, enabled: Optional[bool] = None):
+        self.stream = sys.stderr if stream is None else stream
+        self.enabled = self.stream.isatty() if enabled is None else enabled
+        self._width = 0
+        self._phase = ""
+
+    def update(self, message: str) -> None:
+        if self.enabled:
+            pad = " " * max(0, self._width - len(message))
+            self.stream.write(f"\r{message}{pad}")
+            self.stream.flush()
+            self._width = len(message)
+            return
+        phase = message.split("  ", 1)[0]
+        if phase != self._phase:
+            self._phase = phase
+            print(message, file=self.stream)
+
+    def clear(self) -> None:
+        if self.enabled and self._width:
+            self.stream.write("\r" + " " * self._width + "\r")
+            self.stream.flush()
+            self._width = 0
 
 
-def _modules_for_diff(repo: str, ref: str, extensions, snapshot_dir: str):
-    """Full as-built map at ``ref``: a fresh snapshot if one matches, else extract."""
+def _modules_for_diff(repo: str, ref: str, extensions, snapshot_dir: str, status: Status):
+    """Full as-built map at ``ref``, plus the sources that map was read from.
+
+    A fresh snapshot supplies the map. The sources are still read once, for
+    the review, and that same read is parsed when no snapshot matches.
+    """
     loaded = load_fresh_snapshot(repo, ref, snapshot_dir)
+    paths = list_tracked_source_files(repo, ref, extensions)
+    total = len(paths)
+
+    def on_read(done: int, count: int) -> None:
+        status.update(f"Reading {ref}  {done}/{count}")
+
+    if total == 0:
+        status.update(f"Reading {ref}  0 files")
+    files = list_files_at_ref(repo, ref, paths, on_file=on_read)
     if loaded is not None:
-        return loaded
-    return extract_ref(repo, ref, extensions)
+        status.update(f"Using snapshot for {ref}")
+        return loaded, files
+
+    def on_parse(done: int, count: int) -> None:
+        status.update(f"Parsing {ref}  {done}/{count}")
+
+    status.update(f"Parsing {ref}  0/{len(files)}")
+    return build_modules(files, on_file=on_parse), files
+
+
+def _use_ref(repo: str, ref: str) -> str:
+    resolved = resolve_ref(repo, ref)
+    if resolved != ref:
+        print(f"Using {resolved} for {ref}")
+    return resolved
 
 
 def cmd_snapshot(args: argparse.Namespace) -> int:
     langs = args.lang if args.lang != ["auto"] else ["python", "typescript"]
     extensions = extensions_for(langs)
     try:
+        args.ref = _use_ref(args.repo, args.ref)
         model_path = write_snapshot(
             args.repo, args.ref, extensions, args.out_dir, render=args.render,
         )
@@ -131,8 +193,16 @@ def main(argv=None) -> int:
 
     p_diff = sub.add_parser("diff", help="Diff two git refs and write an HTML report.")
     p_diff.add_argument("--repo", default=".", help="Path to the git repository (default: current directory).")
-    p_diff.add_argument("--base", required=True, help="Base ref, e.g. main or the PR's target branch.")
-    p_diff.add_argument("--head", required=True, help="Head ref, e.g. the PR branch or HEAD.")
+    p_diff.add_argument(
+        "--base", required=True,
+        help="Base ref, e.g. main or the PR's target branch. "
+             "A name that exists on exactly one remote is read from that remote-tracking ref.",
+    )
+    p_diff.add_argument(
+        "--head", required=True,
+        help="Head ref, e.g. the PR branch or HEAD. "
+             "A name that exists on exactly one remote is read from that remote-tracking ref.",
+    )
     p_diff.add_argument("--out", default="skyline_report.html", help="Output HTML file path.")
     p_diff.add_argument(
         "--comment", default=None,

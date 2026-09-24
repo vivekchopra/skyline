@@ -53,7 +53,7 @@ Agents don't share an architect's sense of where code belongs. Skyline's job is 
 - **Type and member diff**: added, removed, modified, with per-member signature diffs (params, modifiers, return type). A same-signature rewrite is also modified when complexity or the body hash changes. A class decorator change is a type-level modification.
 - **Relationship-change detection**: flags when a type starts or stops extending or implementing something.
 - **Imports**: Python and TypeScript import edges resolved to files in the tree. Unresolved third-party modules (such as `react`) are dropped. A two-way import is drawn thicker.
-- **As-built map**: `skyline snapshot` parses every matching source file at a git ref, not only the names in the three-dot diff, and writes `.skyline/model.json`. That JSON is generated. Code plus policy are the source of truth. Ignore `.skyline/` or check it in as a lockfile; skyline doesn't choose for you.
+- **As-built map**: `skyline snapshot` parses every matching source file at a git ref, not only the names in the three-dot diff, and writes `.skyline/model.json`. That JSON is generated. Code plus policy are the source of truth. In a repo you are reviewing, gitignore `.skyline/`. Check `model.json` in only when you want that snapshot in the pull request as a lockfile.
 - **Policy**: a checked-in `skyline.policy.toml` names layers that already exist as path prefixes, and which way dependencies may point. A new inner-to-outer import is a violation. No policy file means the overlay still runs and nothing is painted illegal. `--fail-on-violation` can fail the run. CRAP never does.
 - **PR overlay**: the default picture is the delta plus its neighborhood (the base class a changed type extends, the other end of a new import), not every box in the repo. With a policy, types sit in layer bands, inner above outer. Violations come first: new illegal edges, new types in the wrong package, new cycles that cross layers.
 - **Data model**: a second diagram for Django `models.Model` subclasses, SQLAlchemy `Column` / `mapped_column` tables, and Prisma `model` blocks. An added column shows up there. It is not copied onto the class diagram as if the class map were an ER diagram. SQL migration files aren't parsed yet.
@@ -115,7 +115,7 @@ skyline snapshot --repo <path> --ref HEAD [--out-dir .skyline] [--render]
 
 - `--repo`: path to the git repository (default: current directory)
 - `--base`: the PR's target branch, e.g. `main`, `origin/main`
-- `--head`: the PR's branch, e.g. `HEAD`, a branch name, a commit SHA
+- `--head`: the PR's branch, e.g. `HEAD`, a branch name, a commit SHA. A branch that is not checked out locally, but exists on exactly one remote, is read from that remote-tracking ref (`origin/my-feature-branch`). If several remotes have it, pass the remote-tracking name.
 - `--out`: output HTML file path (default: `skyline_report.html`)
 - `--comment`: also write the markdown PR comment
 - `--lang`: one or more of `python`, `typescript` (default: both, whichever files are present). `.prisma` files are read either way
@@ -126,6 +126,15 @@ skyline snapshot --repo <path> --ref HEAD [--out-dir .skyline] [--render]
 - `snapshot --ref`: git ref to map (default: `HEAD`)
 - `snapshot --out-dir`: output directory (default: `.skyline`; `docs/architecture` if you want the render under `docs/`)
 - `snapshot --render`: also write `map.md` and `map.svg`. The JSON model stays the IR
+
+`diff` writes `skyline_report.html` in the current directory. `snapshot` writes `.skyline/model.json` inside the repo, plus `map.md` and `map.svg` when you pass `--render`. Skyline does not add these to `.gitignore`. In a repo you are reviewing, ignore them:
+
+```gitignore
+.skyline/
+skyline_report.html
+```
+
+Commit `.skyline/model.json` only when you want that snapshot to show up in the pull request as a lockfile. `skyline.policy.toml` stays committed either way.
 
 Internally `diff` still uses git's three-dot range (`base...head`) for what counts as the PR, the same range GitHub shows, so the overlay is what the PR introduced relative to its merge-base, not unrelated drift on `main`. The maps underneath that overlay are the whole tree at each ref.
 

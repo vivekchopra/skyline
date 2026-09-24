@@ -15,10 +15,23 @@ PRISMA_EXTENSIONS = (".prisma",)
 ALL_EXTENSIONS = PYTHON_EXTENSIONS + TYPESCRIPT_EXTENSIONS + PRISMA_EXTENSIONS
 
 
-def build_modules(files: Dict[str, str]) -> Dict[str, ModuleModel]:
-    """files: {path: source}, any mix of extensions in ALL_EXTENSIONS."""
+def build_modules(files: Dict[str, str], on_file=None) -> Dict[str, ModuleModel]:
+    """files: {path: source}, any mix of extensions in ALL_EXTENSIONS.
+
+    ``on_file(done, total)`` fires as each file is parsed. TypeScript is
+    one compiler run, so it reports once for the whole batch.
+    """
     py_files = {p: s for p, s in files.items() if p.endswith(PYTHON_EXTENSIONS)}
     ts_files = {p: s for p, s in files.items() if p.endswith(TYPESCRIPT_EXTENSIONS)}
+    prisma_files = {p: s for p, s in files.items() if p.endswith(PRISMA_EXTENSIONS)}
+    total = len(py_files) + (1 if ts_files else 0) + len(prisma_files)
+    done = 0
+
+    def tick() -> None:
+        nonlocal done
+        done += 1
+        if on_file is not None:
+            on_file(done, total)
 
     modules: Dict[str, ModuleModel] = {}
 
@@ -26,16 +39,18 @@ def build_modules(files: Dict[str, str]) -> Dict[str, ModuleModel]:
         from .python_extractor import extract_module
         for path, source in py_files.items():
             modules[path] = extract_module(path, source)
+            tick()
 
     if ts_files:
         from .ts_client import extract_modules
         modules.update(extract_modules(ts_files))
+        tick()
 
-    prisma_files = {p: s for p, s in files.items() if p.endswith(PRISMA_EXTENSIONS)}
     if prisma_files:
         from .prisma_extractor import extract_prisma
         for path, source in prisma_files.items():
             modules[path] = extract_prisma(path, source)
+            tick()
 
     return modules
 
