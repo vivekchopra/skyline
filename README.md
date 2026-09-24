@@ -24,7 +24,7 @@ skyline demo --lang typescript
 
 ## Credit
 
-The CRAP score, and the idea of overlaying a risk score directly on a structural diagram, is influence by Robert C. Martin's (unclebob's) **[uml-viewer](https://github.com/unclebob/uml-viewer)** and **[crap4clj](https://github.com/unclebob/crap4clj)**, which do this for Clojure codebases with considerably more sophistication (he also integrates mutation-testing scores, live-update from a running companion agent, and paints an actual navigable UML diagram rather than a diff view). Skyline borrows the formula and the "missing coverage counts as the worst case, not unknown" philosophy from his README. This project is not affiliated with unclebob's projects in any form, and if you're working in Clojure and want the full picture (a live map of the whole repo, not a PR overlay), use his tools directly!
+The CRAP score, and painting it on a structural diagram, comes from Robert C. Martin's [uml-viewer](https://github.com/unclebob/uml-viewer) and [crap4clj](https://github.com/unclebob/crap4clj). Those are Clojure tools. They also score mutation tests, update live, and map the whole repo. Skyline uses the formula, and counts missing coverage as 0%. It is not affiliated with those projects. For a Clojure codebase, use his.
 
 ## Why not just read the diff?
 
@@ -63,7 +63,7 @@ CRAP = complexity² × (1 − coverage)³ + complexity
 ```
 
 - **Complexity** is real cyclomatic complexity, computed by walking each method or function's own AST (Python `ast`, or the TypeScript compiler API) and counting decision points (`if`, loops, `catch`, ternaries, `&&`/`||`/`??`, `switch` cases, comprehensions). It doesn't descend into nested function definitions, so each unit's score stays scoped to itself.
-- **Coverage** defaults to **0% for everything** unless you supply a coverage map (`--coverage path.json`). That's deliberate, not a placeholder: an untested method shouldn't look safer than a tested one just because skyline wasn't told about it. (This convention, and the formula itself, are inspired by uml-viewer/crap4clj, see [Credit](#credit) above.)
+- **Coverage** defaults to **0% for everything** unless you supply a coverage map (`--coverage path.json`). An untested method should not look safer than a tested one because skyline was not given a coverage number. The formula and this 0% rule come from uml-viewer and crap4clj ([Credit](#credit)).
 - Score bands: **low** (≤5, green), **moderate** (≤10, yellow), **high** (≤30, orange), **severe** (>30, red). The 30-point "risky" cutoff follows CRAP4J's original published guidance; the low/moderate split is skyline's own.
 - Removed and unchanged methods aren't scored. A PR review tool cares about the risk of what's being introduced, not what's already there or what's leaving. A body rewrite with the same signature is modified, so it is scored.
 
