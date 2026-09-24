@@ -6,24 +6,16 @@ AI-generated code means more PRs, and bigger ones, and human review of code (as 
 
 AI systems are good at producing locally reasonable changes, but they don't naturally preserve long-term consistency across an entire system. Over time, this creates "architecture slop": a codebase where each individual change may make sense in isolation but the overall structure gradually loses coherence.
 
-A person's 600-line diff can be reviewed line by line because there's reasoning behind it to follow. An agent's diff doesn't offer that. It looks plausible, hunk by hunk, whether or not it belongs where it landed.
-
-The question that matters for a PR like that isn't "is this line correct," it's "does this type belong here, and what does it now depend on." Answering that by staring at a diff and reconstructing the class diagram in your head doesn't scale either.
-
 Skyline diffs a PR structurally instead of textually: classes and interfaces added, removed, or changed, what they now extend or implement, and a CRAP score on anything complex and new. Point it at a base and head ref and it draws the diagram of that change on the as-built map of the whole tree. Give it a layering policy and it flags what breaks it: a new class in the wrong package, a dependency pointing the wrong way.
-
-The PyPI package is `skyline-review`. The command is still `skyline`.
 
 ```
 pip install skyline-review
 skyline diff --repo . --base main --head my-feature-branch
 ```
 
-Opens as `skyline_report.html`. Green is added, red is removed, orange is modified, dashed grey is an unchanged type referenced (a base class or interface, say) so you can see where the change plugs into the existing hierarchy. Inheritance (`extends`) draws as a solid arrow; interface realization (`implements`) draws dashed, per UML convention. Each added or modified method also gets a CRAP score, colored low to severe, so you can see which new code is actually risky. When a `skyline.policy.toml` is present, new policy violations are listed above the diagram.
+The report is written to `skyline_report.html`. Green indicates what was added, red removed, orange modified, and dashed grey any unchanged type referenced (a base class or interface, say) so you can see where the change plugs into the existing hierarchy. Inheritance (`extends`) draws as a solid arrow; interface realization (`implements`) draws dashed, per UML convention. Each added or modified method also gets a CRAP score, colored low to severe, so you can see which new code is actually risky. When a `skyline.policy.toml` is present, new policy violations are listed above the diagram.
 
 Python and TypeScript files in the same PR are diffed together automatically, no extra flag needed. Restrict to one language with `--lang python` or `--lang typescript` if that's what you want.
-
-Try it without a git repo, on bundled sample code:
 
 ```
 skyline demo --lang python
@@ -32,7 +24,7 @@ skyline demo --lang typescript
 
 ## Credit
 
-The CRAP score, and the idea of overlaying a risk score directly on a structural diagram, come from Robert C. Martin's (unclebob's) **[uml-viewer](https://github.com/unclebob/uml-viewer)** and **[crap4clj](https://github.com/unclebob/crap4clj)**, which do this for Clojure codebases with considerably more sophistication (he also integrates mutation-testing scores, live-update from a running companion agent, and paints an actual navigable UML diagram rather than a diff view). Skyline borrows the formula and the "missing coverage counts as the worst case, not unknown" philosophy from his README. It's an independent, unaffiliated project. If you're working in Clojure and want the full picture (a live map of the whole repo, not a PR overlay), use his tools directly.
+The CRAP score, and the idea of overlaying a risk score directly on a structural diagram, is influence by Robert C. Martin's (unclebob's) **[uml-viewer](https://github.com/unclebob/uml-viewer)** and **[crap4clj](https://github.com/unclebob/crap4clj)**, which do this for Clojure codebases with considerably more sophistication (he also integrates mutation-testing scores, live-update from a running companion agent, and paints an actual navigable UML diagram rather than a diff view). Skyline borrows the formula and the "missing coverage counts as the worst case, not unknown" philosophy from his README. It is not affiliated with that project in any form, and if you're working in Clojure and want the full picture (a live map of the whole repo, not a PR overlay), use his tools directly!
 
 ## Why not just read the diff?
 
