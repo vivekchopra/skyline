@@ -18,6 +18,16 @@ def test_same_short_name_classes_both_appear():
     assert svg.count(">Client<") >= 2
 
 
+def test_long_signature_stays_on_one_line():
+    params = ", ".join(f"arg{i}: str" for i in range(12))
+    base = {"pay.py": py_extract("pay.py", "class Payment:\n    def charge(self):\n        return 1\n")}
+    head = {"pay.py": py_extract("pay.py", f"class Payment:\n    def charge(self, {params}):\n        return 1\n")}
+    svg = build_diagram_svg(diff_models(base, head))
+    assert "charge(self, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11)" in svg
+    width = int(svg.split('width="', 2)[1].split('"', 1)[0])
+    assert width > 460
+
+
 def test_changed_free_function_appears():
     base = {"m.py": py_extract("m.py", "def helper():\n    return 1\n")}
     head = {"m.py": py_extract("m.py", "def helper():\n    return 2\n")}

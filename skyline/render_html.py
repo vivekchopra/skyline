@@ -110,6 +110,11 @@ def build_html_report(diff: ModelDiff, base_ref: str, head_ref: str, repo_label:
         f'<h2>Data model</h2><div class="diagram">{data_svg}</div>' if data_svg else ""
     )
     caption = f'<p class="sub">{_esc(review.caption)}</p>' if review is not None else ""
+    if review is not None and review.breaking:
+        breaking_items = "".join(f"<li>{_esc(item)}</li>" for item in review.breaking)
+        breaking_strip = f"<h2>Breaking</h2><ul>{breaking_items}</ul>"
+    else:
+        breaking_strip = ""
     if review is not None and review.risks:
         risk_items = "".join(f"<li>{_esc(item)}</li>" for item in review.risks)
         risk_strip = f'<h2>Risk</h2><ul class="risk">{risk_items}</ul>'
@@ -182,6 +187,7 @@ def build_html_report(diff: ModelDiff, base_ref: str, head_ref: str, repo_label:
 
   <div class="details">
     {violations}
+    {breaking_strip}
     {risk_strip}
   </div>
 

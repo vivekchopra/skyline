@@ -76,5 +76,5 @@ def test_fail_on_violation_and_coupling_without_policy(tmp_path):
     ])
     assert rc_bare == 0
     bare_html = bare.read_text(encoding="utf-8")
-    assert "Policy violations" not in bare_html
+    assert "<h2>Policy violations</h2>" not in bare_html
     assert "domain/a.py" in bare_html and "infra/b.py" in bare_html

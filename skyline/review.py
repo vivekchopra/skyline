@@ -18,8 +18,8 @@ _TOP_N = 5
 
 HOW_TO_REVIEW = (
     "Policy violations first: new dependencies skyline.policy.toml forbids. Nothing listed means this change is allowed, or the repo has no policy.",
-    "Then breaking public signatures, inheritance, and schema.",
-    "Then CRAP on added or modified methods and functions: complexity\u00b2 \u00d7 (1 \u2212 coverage)\u00b3 + complexity. \u22645 low, \u226410 moderate, \u226430 high, >30 severe. No coverage file counts as 0%. A high score means complex and untested. It does not fail the review by itself.",
+    "Then breaking public signatures, inheritance, and schema. Dependents are other files that import the changed file; read a break with dependents first.",
+    "CRAP marks added or modified code that is complex and untested, which is where a defect is most likely. complexity\u00b2 \u00d7 (1 \u2212 coverage)\u00b3 + complexity. \u22645 low, \u226410 moderate, \u226430 high, >30 severe. No coverage file counts as 0%. A high score is a place to read, not a failed check.",
     "Then new imports that are allowed. A thicker arrow is a two-way import.",
     "Then new types whose names do not appear in a changed test file.",
     "Green is added, red removed, orange modified, grey an unchanged neighbor. The diagram is that neighborhood, not the whole repo. The second diagram is tables and columns.",
@@ -68,41 +68,80 @@ def _is_body_only(reason: str) -> bool:
     return all(part in _BODY_ONLY or part.startswith("complexity ") for part in parts)
 
 
+def _fan_in_by_file(diff) -> Dict[str, int]:
+    """Other files that import each file. Head edges win; a deleted file keeps its old importers."""
+    head: Dict[str, set] = {}
+    base: Dict[str, set] = {}
+    for imp in diff.imports:
+        if imp.status in ("added", "unchanged"):
+            head.setdefault(imp.target, set()).add(imp.source)
+        if imp.status in ("removed", "unchanged"):
+            base.setdefault(imp.target, set()).add(imp.source)
+    counts = {}
+    for path in set(head) | set(base):
+        live = head.get(path) or set()
+        counts[path] = len(live) if live else len(base.get(path) or set())
+    return counts
+
+
+def _dependent_clause(path: str, fan_in: Dict[str, int]) -> str:
+    count = fan_in.get(path, 0)
+    if count <= 0:
+        return ""
+    word = "dependent" if count == 1 else "dependents"
+    return f" \u00b7 {count} {word}"
+
+
+def _file_of(qualname: str) -> str:
+    return qualname.split("::", 1)[0]
+
+
 def _breaking(diff) -> List[str]:
-    lines = []
+    fan_in = _fan_in_by_file(diff)
+    ranked = []
+    order = 0
+
+    def add(path: str, line: str) -> None:
+        nonlocal order
+        ranked.append((fan_in.get(path, 0), order, line + _dependent_clause(path, fan_in)))
+        order += 1
+
     for type_change in diff.types:
         if not type_change.exported:
             continue
+        path = _file_of(type_change.qualname)
         if type_change.status == "removed":
-            lines.append(f"removed {type_change.kind} {type_change.qualname}")
+            add(path, f"removed {type_change.kind} {type_change.qualname}")
         elif type_change.added_relations or type_change.removed_relations or not _is_body_only(type_change.reason):
             if type_change.status == "modified":
-                lines.append(f"breaking {type_change.kind} {type_change.qualname}")
+                add(path, f"breaking {type_change.kind} {type_change.qualname}")
         for member in type_change.members:
             unit = member.after or member.before
             if unit is None or not unit.exported:
                 continue
             if member.status == "removed":
-                lines.append(f"removed {type_change.qualname}.{member.name}")
+                add(path, f"removed {type_change.qualname}.{member.name}")
             elif member.status == "modified" and not _is_body_only(member.reason):
-                lines.append(f"breaking {type_change.qualname}.{member.name}: {member.reason}")
+                add(path, f"breaking {type_change.qualname}.{member.name}: {member.reason}")
     for fn in diff.functions:
         unit = fn.after or fn.before
         if unit is None or not unit.exported:
             continue
+        path = _file_of(fn.qualname)
         if fn.status == "removed":
-            lines.append(f"removed {fn.qualname}")
+            add(path, f"removed {fn.qualname}")
         elif fn.status == "modified" and not _is_body_only(fn.reason):
-            lines.append(f"breaking {fn.qualname}: {fn.reason}")
+            add(path, f"breaking {fn.qualname}: {fn.reason}")
     for table in diff.tables:
         if table.status == "removed":
-            lines.append(f"removed table {table.qualname}")
+            add("", f"removed table {table.qualname}")
         for column in table.columns:
             if column.status == "removed":
-                lines.append(f"removed column {table.qualname}.{column.name}")
+                add("", f"removed column {table.qualname}.{column.name}")
             elif column.status == "modified":
-                lines.append(f"breaking column {table.qualname}.{column.name}")
-    return lines
+                add("", f"breaking column {table.qualname}.{column.name}")
+    ranked.sort(key=lambda item: (-item[0], item[1]))
+    return [line for _, _, line in ranked]
 
 
 def _risks(diff) -> List[str]:

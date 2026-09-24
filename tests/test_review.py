@@ -29,6 +29,29 @@ def test_signature_change_is_breaking_and_body_only_is_not():
     assert review.chips["m.py::A.g"] == ["body"]
 
 
+def test_breaking_row_names_files_that_import_it():
+    base = {
+        "a.py": "from b import B\n",
+        "b.py": "class B:\n    def f(self, x):\n        return x\n",
+        "c.py": "class C:\n    def g(self, x):\n        return x\n",
+    }
+    head = {
+        "a.py": "from b import B\n",
+        "b.py": "class B:\n    def f(self, x, y):\n        return x\n",
+        "c.py": "class C:\n    def g(self, x, y):\n        return x\n",
+    }
+    diff = diff_models(
+        {path: py_extract(path, src) for path, src in base.items()},
+        {path: py_extract(path, src) for path, src in head.items()},
+    )
+    review = build_review(diff, base, head)
+    imported = next(line for line in review.breaking if "b.py::B.f" in line)
+    alone = next(line for line in review.breaking if "c.py::C.g" in line)
+    assert imported.endswith("\u00b7 1 dependent")
+    assert "dependent" not in alone
+    assert review.breaking.index(imported) < review.breaking.index(alone)
+
+
 def test_new_type_mentioned_in_a_changed_test_is_not_untested():
     base = {
         "app.py": "",

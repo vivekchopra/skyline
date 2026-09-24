@@ -64,10 +64,17 @@ class Box:
         self.kind = kind
         self.external = external
         self.crap_badge = crap_badge
-        text_lines = [title] + ([note] if note else []) + ([subtitle] if subtitle else []) + [t + (c or "") for t, _, c, _ in lines]
-        widest = max((len(t) for t in text_lines), default=10)
-        badge_w = (len(crap_badge[0]) * CHAR_W + 16) if crap_badge else 0
-        self.width = max(130, min(460, max(widest * CHAR_W + 2 * PADDING, badge_w + widest * CHAR_W * 0.4)))
+        shown_title = title if kind == "class" else f"\u00ab{kind}\u00bb {title}"
+        text_lines = [note] if note else []
+        if subtitle:
+            text_lines.append(subtitle)
+        text_lines.extend(t + (c or "") for t, _, c, _ in lines)
+        widest = max((len(t) for t in text_lines), default=0)
+        badge_w = (len(crap_badge[0]) * 6.3 + 16) if crap_badge else 0
+        # One line per label. The box grows to the text so a signature is not cut off.
+        header_w = len(shown_title) * 8.0 + badge_w + 2 * PADDING
+        body_w = widest * CHAR_W + 2 * PADDING
+        self.width = max(130, header_w, body_w)
         body_h = len(lines) * LINE_H
         self.height = HEADER_H + (LINE_H if note else 0) + (LINE_H if subtitle else 0) + body_h + PADDING
         self.x = 0.0
