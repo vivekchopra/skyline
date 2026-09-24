@@ -119,7 +119,7 @@ skyline snapshot --repo <path> --ref HEAD [--out-dir .skyline] [--render]
 - `snapshot --out-dir`: output directory (default: `.skyline`; `docs/architecture` if you want the render under `docs/`)
 - `snapshot --render`: also write `map.md` and `map.svg`. The JSON model stays the IR
 
-`diff` writes `skyline_report.html` in the current directory. `snapshot` writes `.skyline/model.json` inside the repo, plus `map.md` and `map.svg` when you pass `--render`. Skyline does not add these to `.gitignore`. In a repo you are reviewing, ignore them:
+`diff` writes `skyline_report.html` in the current directory. It also stores each commit's map in `.skyline/maps/<sha>.json`. The sha is the checksum: the same commit prints `No change in <ref>; loading previous run` and skips the read. `snapshot` writes `.skyline/model.json` inside the repo, plus `map.md` and `map.svg` when you pass `--render`. Skyline does not add these to `.gitignore`. In a repo you are reviewing, ignore them:
 
 ```gitignore
 .skyline/

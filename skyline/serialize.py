@@ -52,6 +52,8 @@ def _type_to_dict(t: TypeEntity) -> dict:
         "decorators": list(t.decorators),
         "relations": [list(r) for r in t.relations],
         "exported": t.exported,
+        "line": t.line,
+        "end_line": t.end_line,
         "members": {name: _member_to_dict(m) for name, m in t.members.items()},
     }
 
@@ -67,6 +69,8 @@ def _member_to_dict(m: Member) -> dict:
         "complexity": m.complexity,
         "body_hash": m.body_hash,
         "exported": m.exported,
+        "line": m.line,
+        "end_line": m.end_line,
     }
 
 
@@ -80,6 +84,8 @@ def _function_to_dict(fn: FunctionEntity) -> dict:
         "exported": fn.exported,
         "complexity": fn.complexity,
         "body_hash": fn.body_hash,
+        "line": fn.line,
+        "end_line": fn.end_line,
     }
 
 
@@ -122,6 +128,8 @@ def _type_from_dict(data: dict) -> TypeEntity:
         relations=[tuple(r) for r in data.get("relations") or []],
         members={name: _member_from_dict(m) for name, m in (data.get("members") or {}).items()},
         exported=data.get("exported", True),
+        line=data.get("line"),
+        end_line=data.get("end_line"),
     )
 
 
@@ -136,6 +144,8 @@ def _member_from_dict(data: dict) -> Member:
         complexity=data.get("complexity"),
         body_hash=data.get("body_hash"),
         exported=data.get("exported", True),
+        line=data.get("line"),
+        end_line=data.get("end_line"),
     )
 
 
@@ -149,6 +159,8 @@ def _function_from_dict(data: dict) -> FunctionEntity:
         exported=data.get("exported", True),
         complexity=data.get("complexity"),
         body_hash=data.get("body_hash"),
+        line=data.get("line"),
+        end_line=data.get("end_line"),
     )
 
 

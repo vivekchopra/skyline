@@ -43,6 +43,8 @@ class TypeChange:
     members: List[MemberChange] = field(default_factory=list)
     exported: bool = True
     reason: str = ""
+    line: Optional[int] = None
+    end_line: Optional[int] = None
 
 
 @dataclass
@@ -189,12 +191,12 @@ def diff_models(base_modules: Dict[str, ModuleModel], head_modules: Dict[str, Mo
                 diff.types.append(TypeChange(
                     name=name, qualname=ht.qualname, path=path, kind=ht.kind, status="added",
                     relations=ht.relations, members=_diff_members({}, ht.members),
-                    exported=ht.exported))
+                    exported=ht.exported, line=ht.line, end_line=ht.end_line))
             elif ht is None:
                 diff.types.append(TypeChange(
                     name=name, qualname=bt.qualname, path=path, kind=bt.kind, status="removed",
                     relations=bt.relations, members=_diff_members(bt.members, {}),
-                    exported=bt.exported))
+                    exported=bt.exported, line=bt.line, end_line=bt.end_line))
             else:
                 added_rel = [r for r in ht.relations if r not in bt.relations]
                 removed_rel = [r for r in bt.relations if r not in ht.relations]
@@ -211,7 +213,8 @@ def diff_models(base_modules: Dict[str, ModuleModel], head_modules: Dict[str, Mo
                     name=name, qualname=ht.qualname, path=path, kind=ht.kind,
                     status="modified" if changed else "unchanged",
                     relations=ht.relations, added_relations=added_rel, removed_relations=removed_rel,
-                    members=member_changes, exported=ht.exported, reason="; ".join(reasons)))
+                    members=member_changes, exported=ht.exported, reason="; ".join(reasons),
+                    line=ht.line, end_line=ht.end_line))
 
         diff.functions.extend(_diff_functions(b_funcs, h_funcs, path))
 

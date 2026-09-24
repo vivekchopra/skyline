@@ -35,6 +35,7 @@ def write_snapshot(repo: str, ref: str, extensions, out_dir: str, render: bool =
     modules = extract_ref(repo, ref, extensions)
     model_path = directory / "model.json"
     model_path.write_text(dump_modules(modules, ref=ref, sha=sha), encoding="utf-8")
+    save_cached_map(repo, out_dir, ref, sha, modules)
     if render:
         from .diff import diff_models
         from .render_mermaid import modules_mermaid
@@ -45,6 +46,34 @@ def write_snapshot(repo: str, ref: str, extensions, out_dir: str, render: bool =
             build_diagram_svg(diff_models({}, modules)), encoding="utf-8"
         )
     return model_path
+
+
+def cache_path(repo: str, out_dir: str, sha: str) -> Path:
+    return snapshot_dir(repo, out_dir) / "maps" / f"{sha}.json"
+
+
+def load_cached_map(repo: str, out_dir: str, sha: str) -> Optional[Dict[str, ModuleModel]]:
+    """Load the map written for this commit. The sha is the checksum."""
+    path = cache_path(repo, out_dir, sha)
+    if not path.is_file():
+        model_path = snapshot_dir(repo, out_dir) / "model.json"
+        if not model_path.is_file():
+            return None
+        path = model_path
+    try:
+        _ref, stored_sha, modules = load_modules(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, RuntimeError):
+        return None
+    if stored_sha != sha:
+        return None
+    return modules
+
+
+def save_cached_map(repo: str, out_dir: str, ref: str, sha: str, modules: Dict[str, ModuleModel]) -> Path:
+    path = cache_path(repo, out_dir, sha)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(dump_modules(modules, ref=ref, sha=sha), encoding="utf-8")
+    return path
 
 
 def load_fresh_snapshot(repo: str, ref: str, out_dir: str) -> Optional[Dict[str, ModuleModel]]:

@@ -74,6 +74,8 @@ def _to_member(data: dict) -> Member:
         complexity=data.get("complexity"),
         body_hash=data.get("body_hash"),
         exported="private" not in data.get("modifiers", []),
+        line=data.get("line"),
+        end_line=data.get("end_line"),
     )
 
 
@@ -89,6 +91,8 @@ def _to_module(data: dict) -> ModuleModel:
             relations=[tuple(r) for r in t.get("relations", [])],
             members={mn: _to_member(m) for mn, m in t.get("members", {}).items()},
             exported=t.get("exported", True),
+            line=t.get("line"),
+            end_line=t.get("end_line"),
         )
     for name, fn in data.get("functions", {}).items():
         module.functions[name] = FunctionEntity(
@@ -100,6 +104,8 @@ def _to_module(data: dict) -> ModuleModel:
             exported=fn.get("exported", True),
             complexity=fn.get("complexity"),
             body_hash=fn.get("body_hash"),
+            line=fn.get("line"),
+            end_line=fn.get("end_line"),
         )
     module.imports = list(data.get("imports") or [])
     return module

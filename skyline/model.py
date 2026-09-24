@@ -30,6 +30,8 @@ class Member:
     complexity: Optional[int] = None  # cyclomatic complexity; None for signature-only members (e.g. interface methods)
     body_hash: Optional[str] = None  # hash of the unit's own body; None when there is no body
     exported: bool = True  # public-name heuristic: leading "_" is internal; dunder methods stay public
+    line: Optional[int] = None
+    end_line: Optional[int] = None
 
 
 @dataclass
@@ -43,6 +45,8 @@ class FunctionEntity:
     exported: bool = True
     complexity: Optional[int] = None
     body_hash: Optional[str] = None
+    line: Optional[int] = None
+    end_line: Optional[int] = None
 
 
 @dataclass
@@ -55,6 +59,8 @@ class TypeEntity:
     relations: List[Relation] = field(default_factory=list)
     members: Dict[str, Member] = field(default_factory=dict)
     exported: bool = True
+    line: Optional[int] = None
+    end_line: Optional[int] = None
 
 
 @dataclass

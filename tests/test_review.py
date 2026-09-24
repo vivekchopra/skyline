@@ -24,8 +24,8 @@ def test_signature_change_is_breaking_and_body_only_is_not():
     )
     crap.annotate(diff, {})
     review = build_review(diff, {"m.py": base_src}, {"m.py": head_src})
-    assert any("m.py::A.f" in line and "breaking" in line for line in review.breaking)
-    assert not any("m.py::A.g" in line for line in review.breaking)
+    assert any("m.py::A.f" in line.text and "breaking" in line.text for line in review.breaking)
+    assert not any("m.py::A.g" in line.text for line in review.breaking)
     assert review.chips["m.py::A.g"] == ["body"]
 
 
@@ -45,10 +45,11 @@ def test_breaking_row_names_files_that_import_it():
         {path: py_extract(path, src) for path, src in head.items()},
     )
     review = build_review(diff, base, head)
-    imported = next(line for line in review.breaking if "b.py::B.f" in line)
-    alone = next(line for line in review.breaking if "c.py::C.g" in line)
-    assert imported.endswith("\u00b7 1 dependent")
-    assert "dependent" not in alone
+    imported = next(line for line in review.breaking if "b.py::B.f" in line.text)
+    alone = next(line for line in review.breaking if "c.py::C.g" in line.text)
+    assert imported.text.endswith("\u00b7 1 dependent")
+    assert "dependent" not in alone.text
+    assert imported.line is not None
     assert review.breaking.index(imported) < review.breaking.index(alone)
 
 
