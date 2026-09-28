@@ -57,6 +57,37 @@ def test_emit_prompt_alone_replaces_the_marker(tmp_path):
     assert '"stats"' in text
 
 
+def test_html_copy_prompt_uses_the_template(tmp_path):
+    repo = _repo(tmp_path)
+    template = tmp_path / "custom.md"
+    template.write_text("RANK THIS\n\n{{SKYLINE_DATA}}\n", encoding="utf-8")
+    out = tmp_path / "report.html"
+    rc = main([
+        "diff", "--repo", str(repo), "--base", "HEAD~1", "--head", "HEAD",
+        "--out", str(out),
+        "--prompt-template", str(template),
+    ])
+    assert rc == 0
+    html = out.read_text(encoding="utf-8")
+    assert "Copy prompt" in html
+    assert "Use this Skyline analysis in an AI code reviewer." in html
+    assert "RANK THIS" in html
+    assert "{{SKYLINE_DATA}}" not in html
+    assert '"stats"' in html
+
+
+def test_prompt_script_close_is_escaped():
+    from skyline.diff import ModelDiff
+    from skyline.render_html import build_html_report
+
+    html = build_html_report(ModelDiff(), "base", "head", prompt="hello </script> <b>")
+    start = html.index('id="skyline-prompt">') + len('id="skyline-prompt">')
+    blob = html[start:html.index("</script>", start)]
+    assert "</script>" not in blob
+    assert "\\u003c/script>" in blob
+    assert "Copy prompt" in html
+
+
 def test_custom_template_missing_marker_fails(tmp_path):
     repo = _repo(tmp_path)
     template = tmp_path / "custom.md"

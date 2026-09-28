@@ -3,11 +3,67 @@ HTML report (no external assets, safe to open directly or attach to a PR)."""
 from __future__ import annotations
 
 import html
+import json
+from typing import Optional
 
 from .diff import ModelDiff
 from .links import finding_href
 from .render_svg import build_data_svg, build_diagram_svg
 from .review import HOW_TO_REVIEW
+
+COPY_TIP = "Use this Skyline analysis in an AI code reviewer."
+
+_COPY_SCRIPT = """
+<script>
+(function () {
+  var button = document.getElementById("skyline-copy");
+  var raw = document.getElementById("skyline-prompt");
+  if (!button || !raw) return;
+  var text = JSON.parse(raw.textContent);
+  function markCopied() {
+    button.textContent = "Copied";
+    button.classList.add("done");
+  }
+  function showSelected() {
+    var panel = document.getElementById("skyline-prompt-panel");
+    var view = document.getElementById("skyline-prompt-view");
+    view.textContent = text;
+    panel.hidden = false;
+    var range = document.createRange();
+    range.selectNodeContents(view);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  function copyFallback() {
+    var area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.left = "-9999px";
+    document.body.appendChild(area);
+    area.select();
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+    document.body.removeChild(area);
+    return ok;
+  }
+  button.addEventListener("click", function () {
+    function finish(ok) {
+      markCopied();
+      if (!ok) showSelected();
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () { finish(true); }, function () {
+        finish(copyFallback());
+      });
+      return;
+    }
+    finish(copyFallback());
+  });
+})();
+</script>
+"""
 
 STATUS_LABEL = {"added": "Added", "removed": "Removed", "modified": "Modified"}
 STATUS_COLOR = {"added": "#2e7d32", "removed": "#c62828", "modified": "#e65100"}
@@ -107,9 +163,38 @@ def _finding_html(item, remote: str, base_sha: str, head_sha: str) -> str:
     return f'<a href="{_esc(href)}">{_esc(text)}</a>'
 
 
+def _copy_header(prompt: Optional[str]) -> str:
+    if not prompt:
+        return "<h1>Skyline</h1>"
+    return (
+        '<div class="title-row">'
+        "<h1>Skyline</h1>"
+        '<span class="copy-wrap">'
+        '<button type="button" class="copy" id="skyline-copy" '
+        'aria-describedby="skyline-copy-tip">Copy prompt</button>'
+        f'<span class="copy-tip" id="skyline-copy-tip" role="tooltip">{_esc(COPY_TIP)}</span>'
+        "</span></div>"
+        '<div class="prompt-fallback" id="skyline-prompt-panel" hidden>'
+        '<p class="hint">The prompt is selected.</p>'
+        '<pre id="skyline-prompt-view"></pre>'
+        "</div>"
+    )
+
+
+def _copy_script(prompt: Optional[str]) -> str:
+    if not prompt:
+        return ""
+    payload = json.dumps(prompt).replace("<", "\\u003c")
+    return (
+        f'<script type="application/json" id="skyline-prompt">{payload}</script>'
+        + _COPY_SCRIPT
+    )
+
+
 def build_html_report(diff: ModelDiff, base_ref: str, head_ref: str, repo_label: str = "",
                       policy=None, review=None, remote: str = "",
-                      base_sha: str = "", head_sha: str = "") -> str:
+                      base_sha: str = "", head_sha: str = "",
+                      prompt: Optional[str] = None) -> str:
     counts = diff.counts()
     layers = policy.layers if policy is not None else None
     layer_of = policy.layer_for if policy is not None else None
@@ -153,6 +238,16 @@ def build_html_report(diff: ModelDiff, base_ref: str, head_ref: str, repo_label:
 <style>
   body {{ font-family: -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 24px; color: #1a1a1a; background: #fafafa; }}
   h1 {{ font-size: 18px; margin-bottom: 4px; }}
+  .title-row {{ display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }}
+  .title-row h1 {{ margin: 0; }}
+  .copy-wrap {{ position: relative; display: inline-flex; }}
+  .copy {{ background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px 14px; font: 13px/1.2 -apple-system, Segoe UI, Roboto, sans-serif; color: #1a1a1a; cursor: pointer; }}
+  .copy.done {{ color: #2e7d32; border-color: #a5d6a7; background: #f1f8f2; }}
+  .copy-tip {{ display: none; position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%); z-index: 2; width: max-content; max-width: 320px; background: #1a1a1a; color: white; font-size: 12px; line-height: 1.4; padding: 6px 8px; border-radius: 6px; }}
+  .copy-wrap:hover .copy-tip, .copy-wrap:focus-within .copy-tip {{ display: block; }}
+  .prompt-fallback {{ background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; margin: 0 0 16px; max-width: 760px; }}
+  .prompt-fallback .hint {{ font-size: 12px; color: #666; margin: 0 0 8px; }}
+  .prompt-fallback pre {{ margin: 0; max-height: 180px; overflow: auto; white-space: pre-wrap; background: #f7f7f7; border-radius: 6px; padding: 10px 12px; font-size: 12px; line-height: 1.45; }}
   .sub {{ color: #666; font-size: 13px; margin-bottom: 20px; }}
   .legend span {{ display:inline-block; margin-right: 16px; font-size: 12px; }}
   .swatch {{ display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:middle; }}
@@ -175,7 +270,7 @@ def build_html_report(diff: ModelDiff, base_ref: str, head_ref: str, repo_label:
 </style>
 </head>
 <body>
-  <h1>Skyline</h1>
+  {_copy_header(prompt)}
   <div class="sub">{_esc(repo_label)} &nbsp;\u00b7&nbsp; <code>{_esc(base_ref)}</code> \u2192 <code>{_esc(head_ref)}</code></div>
   <ul class="guide">
     {"".join(f"<li>{_esc(line)}</li>" for line in HOW_TO_REVIEW)}
@@ -227,6 +322,7 @@ def build_html_report(diff: ModelDiff, base_ref: str, head_ref: str, repo_label:
     and <a href="https://github.com/unclebob/crap4clj" target="_blank" rel="noopener">crap4clj</a>.
     skyline is an independent, unaffiliated project.
   </p>
+  {_copy_script(prompt)}
 </body>
 </html>
 """

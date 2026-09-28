@@ -190,6 +190,7 @@ After step 4 this resolver runs against the **full** as-built file set, not only
 - [`skyline/prompts/review.md`](../skyline/prompts/review.md): default template. One `{{SKYLINE_DATA}}` marker.
 - [`skyline/render_prompt.py`](../skyline/render_prompt.py): always builds the JSON, substitutes the template, fails if the marker is missing.
 - CLI `--emit-prompt out.md` and `--prompt-template path.md`. Works without `--format` or `--out`.
+- The HTML report's Copy prompt button copies that same prompt. `--prompt-template` fills the button too.
 
 **Not in this step.** No workflow change. No new violation rules.
 

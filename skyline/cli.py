@@ -61,26 +61,28 @@ def cmd_diff(args: argparse.Namespace) -> int:
     crap.annotate(diff, coverage_map)
     review = build_review(diff, base_sources, head_sources)
     remote = origin_url(args.repo)
-    if args.format == "json":
-        report = render_json(diff, args.base, args.head, review)
-    else:
-        report = build_html_report(
-            diff, args.base, args.head, repo_label=args.repo, policy=policy, review=review,
-            remote=remote, base_sha=base_sha, head_sha=head_sha,
-        )
-
-    with open(args.out, "w", encoding="utf-8") as f:
-        f.write(report)
-    if getattr(args, "emit_prompt", None):
+    prompt_text = None
+    if args.format != "json" or getattr(args, "emit_prompt", None):
         try:
-            bundled = render_prompt(
+            prompt_text = render_prompt(
                 diff, args.base, args.head, review,
                 load_template(args.prompt_template or ""),
             )
         except (ValueError, OSError) as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 1
-        Path(args.emit_prompt).write_text(bundled, encoding="utf-8")
+    if args.format == "json":
+        report = render_json(diff, args.base, args.head, review)
+    else:
+        report = build_html_report(
+            diff, args.base, args.head, repo_label=args.repo, policy=policy, review=review,
+            remote=remote, base_sha=base_sha, head_sha=head_sha, prompt=prompt_text,
+        )
+
+    with open(args.out, "w", encoding="utf-8") as f:
+        f.write(report)
+    if getattr(args, "emit_prompt", None):
+        Path(args.emit_prompt).write_text(prompt_text, encoding="utf-8")
         print(f"Wrote {args.emit_prompt}")
 
     if args.comment:
@@ -204,7 +206,10 @@ def cmd_demo(args: argparse.Namespace) -> int:
 
     diff = diff_models(base_modules, head_modules)
     crap.annotate(diff, {})  # no coverage map for the demo: shows the 0%-assumed worst case
-    report = build_html_report(diff, "before", "after", repo_label=f"skyline demo ({args.lang})")
+    prompt = render_prompt(diff, "before", "after", None, load_template())
+    report = build_html_report(
+        diff, "before", "after", repo_label=f"skyline demo ({args.lang})", prompt=prompt,
+    )
 
     with open(args.out, "w", encoding="utf-8") as f:
         f.write(report)
@@ -242,8 +247,8 @@ def main(argv=None) -> int:
     )
     p_diff.add_argument(
         "--prompt-template", default=None,
-        help="Markdown template for --emit-prompt. Default: skyline/prompts/review.md. "
-             "Must contain {{SKYLINE_DATA}}.",
+        help="Markdown template for the HTML Copy prompt button and for --emit-prompt. "
+             "Default: skyline/prompts/review.md. Must contain {{SKYLINE_DATA}}.",
     )
     p_diff.add_argument(
         "--comment", default=None,

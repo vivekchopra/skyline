@@ -111,7 +111,7 @@ skyline snapshot --repo <path> --ref HEAD [--out-dir .skyline] [--render]
 - `--out`: output file path (default: `skyline_report.html`). The extension does not choose the renderer
 - `--format`: `html` (default) or `json`. JSON is the structural model only. See [JSON schema](docs/json-schema.md)
 - `--emit-prompt`: write one markdown file for an agent. Builds the JSON even when `--format` is `html`. Does not require `--out`
-- `--prompt-template`: template for `--emit-prompt`. Default is `skyline/prompts/review.md`, which must contain `{{SKYLINE_DATA}}`
+- `--prompt-template`: template for the HTML Copy prompt button and for `--emit-prompt`. Default is `skyline/prompts/review.md`, which must contain `{{SKYLINE_DATA}}`
 - `--comment`: also write the markdown PR comment
 - `--lang`: one or more of `python`, `typescript` (default: both, whichever files are present). `.prisma` files are read either way
 - `--coverage`: optional path to a coverage map JSON file (see [Coverage input](#coverage-input)); without it, every method or function is scored assuming 0% coverage
@@ -137,7 +137,7 @@ Internally `diff` still uses git's three-dot range (`base...head`) for what coun
 
 `--format json` writes the same sections as the HTML report: stats, violations, types, functions, breaking changes (with dependents), the full CRAP list, coupling, untested new types, and the data model. The HTML risk strip stays a short summary. The field list is [docs/json-schema.md](docs/json-schema.md).
 
-`--emit-prompt review.md` writes a prompt with that JSON substituted at `{{SKYLINE_DATA}}`. Copy `skyline/prompts/review.md` and pass it with `--prompt-template` when a repo wants its own ranking. A template without the marker fails the run. Both flags can be used in one command. The workflow in this repo does not post the prompt file yet.
+`--emit-prompt review.md` writes a prompt with that JSON substituted at `{{SKYLINE_DATA}}`. The HTML report has a Copy prompt button beside the title that copies that same text, so you can review the diagram and paste the analysis into an AI code reviewer. Hover the button for that hint. If the browser blocks the clipboard, the prompt is selected on the page. Copy `skyline/prompts/review.md` and pass it with `--prompt-template` when a repo wants its own ranking. A template without the marker fails the run. Both flags can be used in one command. The workflow in this repo does not post the prompt file yet.
 
 ### Policy
 
