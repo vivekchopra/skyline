@@ -39,8 +39,10 @@ def test_diff_format_json_matches_demo_golden(tmp_path):
     data = json.loads(out.read_text(encoding="utf-8"))
     golden = json.loads(_GOLDEN.read_text(encoding="utf-8"))
     assert data["stats"] == golden["stats"]
-    assert [row["crap"] for row in data["risk"]] == [row["crap"] for row in golden["risk"]]
-    assert [row["name"] for row in data["risk"]] == [row["name"] for row in golden["risk"]]
+    assert [row["text"] for row in data["changed_behavior"]] == [
+        row["text"] for row in golden["changed_behavior"]
+    ]
+    assert [row["text"] for row in data["hotspots"]] == [row["text"] for row in golden["hotspots"]]
 
 
 def test_emit_prompt_alone_replaces_the_marker(tmp_path):

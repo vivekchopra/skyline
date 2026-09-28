@@ -7,8 +7,8 @@ review order, then Mermaid.
 from __future__ import annotations
 
 from .links import finding_href
-from .render_mermaid import coupling_mermaid, data_mermaid, diff_class_mermaid
-from .review import HOW_TO_REVIEW
+from .render_mermaid import data_mermaid, diff_class_mermaid
+from .review import HOW_TO_REVIEW, dropped_line, generated_line
 
 MARKER = "<!-- skyline-report -->"
 
@@ -19,6 +19,16 @@ def _finding_md(item, remote: str, base_sha: str, head_sha: str) -> str:
     if not href:
         return text
     return f"[{text}]({href})"
+
+
+def _section(lines, title, items, remote, base_sha, head_sha) -> None:
+    if not items:
+        return
+    lines.append(f"### {title}")
+    lines.append("")
+    for item in items:
+        lines.append(f"- {_finding_md(item, remote, base_sha, head_sha)}")
+    lines.append("")
 
 
 def render_comment(diff, review, base_ref: str, head_ref: str,
@@ -38,6 +48,9 @@ def render_comment(diff, review, base_ref: str, head_ref: str,
     if review is not None and review.caption:
         lines.append(review.caption)
         lines.append("")
+    if review is not None and generated_line(review):
+        lines.append(generated_line(review))
+        lines.append("")
 
     violations = [v for v in getattr(diff, "violations", []) if getattr(v, "is_new", False)]
     if violations:
@@ -56,25 +69,20 @@ def render_comment(diff, review, base_ref: str, head_ref: str,
     )
     lines.append("")
 
-    if review is not None and review.breaking:
-        lines.append("### Breaking changes")
+    if review is not None:
+        _section(lines, "Schema", review.schema, remote, base_sha, head_sha)
+        _section(lines, "Untested", review.untested, remote, base_sha, head_sha)
+        _section(lines, "Changed behavior", review.changed, remote, base_sha, head_sha)
+        _section(lines, "Hotspots touched", review.hotspots, remote, base_sha, head_sha)
+        _section(lines, "Breaking", review.breaking, remote, base_sha, head_sha)
+        note = dropped_line(review)
+        if note:
+            lines.append(note)
+            lines.append("")
+        lines.append("### Coupling")
         lines.append("")
-        for item in review.breaking:
-            lines.append(f"- {_finding_md(item, remote, base_sha, head_sha)}")
-        lines.append("")
-
-    if review is not None and review.risks:
-        lines.append("### Risk")
-        lines.append("")
-        for item in review.risks:
-            lines.append(f"- {_finding_md(item, remote, base_sha, head_sha)}")
-        lines.append("")
-
-    if review is not None and review.untested:
-        lines.append("### Untested new types")
-        lines.append("")
-        for item in review.untested:
-            lines.append(f"- `{item}`")
+        for item in review.coupling:
+            lines.append(item if item == "none" else f"- {item}")
         lines.append("")
 
     lines.append("### Overlay")
@@ -83,13 +91,6 @@ def render_comment(diff, review, base_ref: str, head_ref: str,
     lines.append(diff_class_mermaid(diff))
     lines.append("```")
     lines.append("")
-    lines.append("### Coupling")
-    lines.append("")
-    lines.append("```mermaid")
-    lines.append(coupling_mermaid(diff))
-    lines.append("```")
-    lines.append("")
-
     data = data_mermaid(diff)
     if data:
         lines.append("### Data model")

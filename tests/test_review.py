@@ -53,11 +53,8 @@ def test_breaking_row_names_files_that_import_it():
     assert review.breaking.index(imported) < review.breaking.index(alone)
 
 
-def test_new_type_mentioned_in_a_changed_test_is_not_untested():
-    base = {
-        "app.py": "",
-        "tests/test_app.py": "",
-    }
+def test_sibling_test_in_the_diff_is_not_untested():
+    base = {"app.py": "", "tests/test_app.py": ""}
     head = {
         "app.py": "class Widget:\n    pass\n",
         "tests/test_app.py": "from app import Widget\n",
@@ -69,10 +66,11 @@ def test_new_type_mentioned_in_a_changed_test_is_not_untested():
     covered = build_review(diff, base, head)
     assert covered.untested == []
 
-    head["tests/test_app.py"] = "def test_nothing():\n    assert True\n"
+    lone = dict(head)
+    del lone["tests/test_app.py"]
     bare = diff_models(
-        {path: py_extract(path, src) for path, src in base.items()},
-        {path: py_extract(path, src) for path, src in head.items()},
+        {"app.py": py_extract("app.py", base["app.py"])},
+        {"app.py": py_extract("app.py", lone["app.py"])},
     )
-    missed = build_review(bare, base, head)
-    assert missed.untested == ["app.py::Widget"]
+    missed = build_review(bare, {"app.py": base["app.py"]}, {"app.py": lone["app.py"]})
+    assert [item.text for item in missed.untested] == ["app.py has no sibling test"]

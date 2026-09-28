@@ -45,8 +45,8 @@ def _assert_agrees(diff, review, lang: str):
     for key, value in data["stats"].items():
         if value:
             assert f">{value}<" in html or f'class="n">{value}<' in html
-    for row in data["risk"]:
-        assert row["crap"]["label"] in html
+    for row in data["changed_behavior"]:
+        assert row["text"] in html
     for fn in data["functions"]:
         if fn["crap"]:
             assert fn["crap"]["label"] in html
@@ -56,7 +56,8 @@ def _assert_agrees(diff, review, lang: str):
                 assert member["crap"]["label"] in html
     golden = _GOLDEN / f"demo-{lang}.json"
     assert raw == golden.read_text(encoding="utf-8")
-    assert len(data["risk"]) >= len(review.risks)
+    assert [row["text"] for row in data["changed_behavior"]] == [item.text for item in review.changed]
+    assert [row["text"] for row in data["hotspots"]] == [item.text for item in review.hotspots]
 
 
 def test_python_json_matches_html_and_golden():

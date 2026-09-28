@@ -1,7 +1,7 @@
-"""JSON render of the same diff the HTML report shows.
+"""JSON render of the same review the HTML report and the comment show.
 
-No new analysis. Missing a field that the HTML report shows is a bug here.
-The risk list is every scored unit, not the HTML top-five summary.
+No new analysis. The ranked lists are the review's lists, capped, not every
+scored unit in the tree.
 """
 from __future__ import annotations
 
@@ -25,42 +25,15 @@ def _crap(score) -> Optional[dict]:
 
 
 def _finding(item) -> dict:
-    return {
+    row = {
         "text": item.text,
         "path": item.path,
+        "qualname": getattr(item, "qualname", ""),
         "line": item.line,
         "end_line": item.end_line,
         "side": item.side,
     }
-
-
-def _full_risk(diff: ModelDiff) -> list:
-    scored = []
-    for type_change in diff.types:
-        for member in type_change.members:
-            if member.crap is None or member.status not in ("added", "modified"):
-                continue
-            unit = member.after or member.before
-            scored.append((member.crap.value, {
-                "name": f"{type_change.qualname}.{member.name}",
-                "path": type_change.path,
-                "line": getattr(unit, "line", None),
-                "end_line": getattr(unit, "end_line", None),
-                "crap": _crap(member.crap),
-            }))
-    for fn in diff.functions:
-        if fn.crap is None or fn.status not in ("added", "modified"):
-            continue
-        unit = fn.after or fn.before
-        scored.append((fn.crap.value, {
-            "name": fn.qualname,
-            "path": fn.path,
-            "line": getattr(unit, "line", None),
-            "end_line": getattr(unit, "end_line", None),
-            "crap": _crap(fn.crap),
-        }))
-    scored.sort(key=lambda item: item[0], reverse=True)
-    return [row for _, row in scored]
+    return row
 
 
 def render_json(diff: ModelDiff, base_ref: str, head_ref: str, review=None) -> str:
@@ -117,9 +90,13 @@ def render_json(diff: ModelDiff, base_ref: str, head_ref: str, review=None) -> s
         "types": types,
         "functions": functions,
         "breaking": [_finding(item) for item in (review.breaking if review else [])],
-        "risk": _full_risk(diff),
-        "coupling": list(review.coupling) if review else [],
-        "untested": list(review.untested) if review else [],
+        "changed_behavior": [_finding(item) for item in (review.changed if review else [])],
+        "hotspots": [_finding(item) for item in (review.hotspots if review else [])],
+        "schema": [_finding(item) for item in (review.schema if review else [])],
+        "coupling": list(review.coupling) if review else ["none"],
+        "untested": [_finding(item) for item in (review.untested if review else [])],
+        "dropped": dict(review.dropped) if review else {},
+        "generated_files": review.generated_files if review else 0,
         "data_model": [
             {
                 "name": table.name,
@@ -128,7 +105,14 @@ def render_json(diff: ModelDiff, base_ref: str, head_ref: str, review=None) -> s
                 "status": table.status,
                 "relations": list(table.relations),
                 "columns": [
-                    {"name": col.name, "status": col.status, "before": col.before, "after": col.after}
+                    {
+                        "name": col.name,
+                        "status": col.status,
+                        "before": col.before,
+                        "after": col.after,
+                        "new_writer_areas": list(getattr(col, "new_writer_areas", ())),
+                        "existing_writer_areas": list(getattr(col, "existing_writer_areas", ())),
+                    }
                     for col in table.columns if col.status != "unchanged"
                 ],
             }

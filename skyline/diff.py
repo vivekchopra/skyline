@@ -28,6 +28,11 @@ class MemberChange:
     after: Optional[Member] = None
     reason: str = ""
     crap: Optional[CrapScore] = None
+    lines_added: int = 0
+    lines_removed: int = 0
+    added_complexity: int = 0
+    whitespace: bool = False
+    delta_measured: bool = False
 
 
 @dataclass
@@ -57,6 +62,11 @@ class FunctionChange:
     after: Optional[FunctionEntity] = None
     reason: str = ""
     crap: Optional[CrapScore] = None
+    lines_added: int = 0
+    lines_removed: int = 0
+    added_complexity: int = 0
+    whitespace: bool = False
+    delta_measured: bool = False
 
 
 @dataclass
@@ -72,6 +82,8 @@ class ColumnChange:
     status: Status
     before: Optional[str] = None
     after: Optional[str] = None
+    new_writer_areas: List[str] = field(default_factory=list)
+    existing_writer_areas: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -223,18 +235,30 @@ def diff_models(base_modules: Dict[str, ModuleModel], head_modules: Dict[str, Mo
     return diff
 
 
+def _norm_column(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    return " ".join(value.split())
+
+
 def _diff_columns(before: Dict[str, Column], after: Dict[str, Column]) -> List[ColumnChange]:
     changes = []
     for name in sorted(set(before) | set(after)):
         old, new = before.get(name), after.get(name)
         if old is None:
-            changes.append(ColumnChange(name=name, status="added", after=new.type))
+            changes.append(ColumnChange(name=name, status="added", after=_norm_column(new.type)))
         elif new is None:
-            changes.append(ColumnChange(name=name, status="removed", before=old.type))
-        elif old.type != new.type:
-            changes.append(ColumnChange(name=name, status="modified", before=old.type, after=new.type))
+            changes.append(ColumnChange(name=name, status="removed", before=_norm_column(old.type)))
+        elif _norm_column(old.type) != _norm_column(new.type):
+            changes.append(ColumnChange(
+                name=name, status="modified",
+                before=_norm_column(old.type), after=_norm_column(new.type),
+            ))
         else:
-            changes.append(ColumnChange(name=name, status="unchanged", before=old.type, after=new.type))
+            changes.append(ColumnChange(
+                name=name, status="unchanged",
+                before=_norm_column(old.type), after=_norm_column(new.type),
+            ))
     return changes
 
 

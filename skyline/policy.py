@@ -37,6 +37,7 @@ class Policy:
     omit: List[str] = field(default_factory=list)
     proposals: Dict[str, str] = field(default_factory=dict)
     data_owners: Dict[str, List[str]] = field(default_factory=dict)
+    generated: List[str] = field(default_factory=list)
 
     def layer_for(self, path: str) -> Optional[str]:
         if any(path.startswith(prefix) for prefix in self.omit):
@@ -118,6 +119,7 @@ def parse_policy(text: str) -> Policy:
         omit=[str(item) for item in (data.get("omit") or [])],
         proposals={str(k): str(v) for k, v in proposals.items()} if isinstance(proposals, dict) else {},
         data_owners=owners,
+        generated=[str(item) for item in (data.get("generated") or [])],
     )
 
 

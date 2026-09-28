@@ -5,6 +5,7 @@
       "end_line": 19,
       "line": 7,
       "path": "payments.py",
+      "qualname": "payments.py::PaymentProcessor",
       "side": "head",
       "text": "breaking class payments.py::PaymentProcessor"
     },
@@ -12,6 +13,7 @@
       "end_line": 10,
       "line": 8,
       "path": "payments.py",
+      "qualname": "payments.py::PaymentProcessor.__init__",
       "side": "head",
       "text": "breaking payments.py::PaymentProcessor.__init__: signature; body changed"
     },
@@ -19,6 +21,7 @@
       "end_line": 13,
       "line": 12,
       "path": "payments.py",
+      "qualname": "payments.py::PaymentProcessor.charge",
       "side": "head",
       "text": "breaking payments.py::PaymentProcessor.charge: signature; body changed"
     },
@@ -26,28 +29,77 @@
       "end_line": 16,
       "line": 15,
       "path": "payments.py",
+      "qualname": "payments.py::PaymentProcessor.refund",
       "side": "head",
       "text": "breaking payments.py::PaymentProcessor.refund: signature; body changed"
     },
     {
-      "end_line": 28,
+      "end_line": 27,
       "line": 27,
       "path": "payments.py",
+      "qualname": "payments.py::validate_amount",
       "side": "head",
       "text": "breaking payments.py::validate_amount: signature"
     }
   ],
-  "coupling": [],
+  "changed_behavior": [
+    {
+      "end_line": 4,
+      "line": 3,
+      "path": "payments.py",
+      "qualname": "payments.py::BaseProcessor.log",
+      "side": "head",
+      "text": "payments.py::BaseProcessor.log \u00b7 added complexity 1"
+    },
+    {
+      "end_line": 19,
+      "line": 18,
+      "path": "payments.py",
+      "qualname": "payments.py::PaymentProcessor.status",
+      "side": "head",
+      "text": "payments.py::PaymentProcessor.status \u00b7 added complexity 1"
+    },
+    {
+      "end_line": 24,
+      "line": 23,
+      "path": "payments.py",
+      "qualname": "payments.py::RecurringPaymentProcessor.charge_monthly",
+      "side": "head",
+      "text": "payments.py::RecurringPaymentProcessor.charge_monthly \u00b7 added complexity 1"
+    },
+    {
+      "end_line": 4,
+      "line": 2,
+      "path": "payments.py",
+      "qualname": "payments.py::BaseProcessor",
+      "side": "head",
+      "text": "payments.py::BaseProcessor \u00b7 added complexity 0"
+    },
+    {
+      "end_line": 24,
+      "line": 22,
+      "path": "payments.py",
+      "qualname": "payments.py::RecurringPaymentProcessor",
+      "side": "head",
+      "text": "payments.py::RecurringPaymentProcessor \u00b7 added complexity 0"
+    }
+  ],
+  "coupling": [
+    "none"
+  ],
   "data_model": [],
+  "dropped": {
+    "pre-existing hotspot": 4
+  },
   "functions": [
     {
       "crap": {
         "band": "low",
-        "complexity": 1,
+        "complexity": 0,
         "coverage": 0.0,
         "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
+        "label": "CRAP 0",
+        "value": 0.0
       },
       "end_line": 28,
       "line": 27,
@@ -58,107 +110,43 @@
       "status": "modified"
     }
   ],
+  "generated_files": 0,
   "head": "after",
-  "risk": [
+  "hotspots": [
     {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
-      "end_line": 4,
-      "line": 3,
-      "name": "payments.py::BaseProcessor.log",
-      "path": "payments.py"
-    },
-    {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
-      "end_line": 10,
-      "line": 8,
-      "name": "payments.py::PaymentProcessor.__init__",
-      "path": "payments.py"
-    },
-    {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
       "end_line": 13,
       "line": 12,
-      "name": "payments.py::PaymentProcessor.charge",
-      "path": "payments.py"
+      "path": "payments.py",
+      "qualname": "payments.py::PaymentProcessor.charge",
+      "side": "head",
+      "text": "pre-existing payments.py::PaymentProcessor.charge \u00b7 hunk 4 lines"
     },
     {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
       "end_line": 16,
       "line": 15,
-      "name": "payments.py::PaymentProcessor.refund",
-      "path": "payments.py"
+      "path": "payments.py",
+      "qualname": "payments.py::PaymentProcessor.refund",
+      "side": "head",
+      "text": "pre-existing payments.py::PaymentProcessor.refund \u00b7 hunk 4 lines"
     },
     {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
-      "end_line": 19,
-      "line": 18,
-      "name": "payments.py::PaymentProcessor.status",
-      "path": "payments.py"
+      "end_line": 10,
+      "line": 8,
+      "path": "payments.py",
+      "qualname": "payments.py::PaymentProcessor.__init__",
+      "side": "head",
+      "text": "pre-existing payments.py::PaymentProcessor.__init__ \u00b7 hunk 3 lines"
     },
     {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
-      "end_line": 24,
-      "line": 23,
-      "name": "payments.py::RecurringPaymentProcessor.charge_monthly",
-      "path": "payments.py"
-    },
-    {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
-      "end_line": 28,
+      "end_line": 27,
       "line": 27,
-      "name": "payments.py::validate_amount",
-      "path": "payments.py"
+      "path": "payments.py",
+      "qualname": "payments.py::validate_amount",
+      "side": "head",
+      "text": "pre-existing payments.py::validate_amount \u00b7 hunk 2 lines"
     }
   ],
+  "schema": [],
   "stats": {
     "functions_added": 0,
     "functions_modified": 1,
@@ -214,11 +202,11 @@
         {
           "crap": {
             "band": "low",
-            "complexity": 1,
+            "complexity": 0,
             "coverage": 0.0,
             "coverage_supplied": false,
-            "label": "CRAP 2",
-            "value": 2.0
+            "label": "CRAP 0",
+            "value": 0.0
           },
           "end_line": 10,
           "line": 8,
@@ -229,11 +217,11 @@
         {
           "crap": {
             "band": "low",
-            "complexity": 1,
+            "complexity": 0,
             "coverage": 0.0,
             "coverage_supplied": false,
-            "label": "CRAP 2",
-            "value": 2.0
+            "label": "CRAP 0",
+            "value": 0.0
           },
           "end_line": 13,
           "line": 12,
@@ -244,11 +232,11 @@
         {
           "crap": {
             "band": "low",
-            "complexity": 1,
+            "complexity": 0,
             "coverage": 0.0,
             "coverage_supplied": false,
-            "label": "CRAP 2",
-            "value": 2.0
+            "label": "CRAP 0",
+            "value": 0.0
           },
           "end_line": 16,
           "line": 15,
@@ -310,8 +298,14 @@
     }
   ],
   "untested": [
-    "payments.py::BaseProcessor",
-    "payments.py::RecurringPaymentProcessor"
+    {
+      "end_line": 2,
+      "line": 2,
+      "path": "payments.py",
+      "qualname": "payments.py",
+      "side": "head",
+      "text": "payments.py has no sibling test"
+    }
   ],
   "violations": []
 }

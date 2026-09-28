@@ -89,19 +89,35 @@ def load_coverage_map(path: Optional[str]) -> Dict[str, float]:
     return {str(k): float(v) for k, v in data.items()}
 
 
+def _scored_complexity(change) -> Optional[int]:
+    """After a hunk measurement, score the added lines. Otherwise the whole unit."""
+    if getattr(change, "delta_measured", False):
+        if change.status == "added":
+            return change.added_complexity if change.added_complexity else (
+                change.after.complexity if change.after is not None else None
+            )
+        return change.added_complexity
+    if change.after is None:
+        return None
+    return change.after.complexity
+
+
 def annotate(diff: "ModelDiff", coverage_map: Dict[str, float]) -> None:
     """Attach a CrapScore to every added/modified member and function in
     `diff`, in place. Only added/modified entries are scored -- a removed
     method's risk no longer matters, and an unchanged one wasn't touched by
     this PR, so it's not part of what needs reviewing right now.
+
+    When the hunk has been measured, the score uses the complexity of the
+    added lines. Coverage stays 0% unless the map supplies a number.
     """
     for t in diff.types:
         for m in t.members:
             if m.status not in ("added", "modified") or m.after is None:
                 continue
             key = f"{t.qualname}.{m.name}"
-            m.crap = score(m.after.complexity, coverage_map.get(key))
+            m.crap = score(_scored_complexity(m), coverage_map.get(key))
     for fn in diff.functions:
         if fn.status not in ("added", "modified") or fn.after is None:
             continue
-        fn.crap = score(fn.after.complexity, coverage_map.get(fn.qualname))
+        fn.crap = score(_scored_complexity(fn), coverage_map.get(fn.qualname))

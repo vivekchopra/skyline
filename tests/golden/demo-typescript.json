@@ -2,24 +2,88 @@
   "base": "before",
   "breaking": [
     {
-      "end_line": 42,
+      "end_line": 40,
       "line": 40,
       "path": "payments.ts",
+      "qualname": "payments.ts::validateAmount",
       "side": "head",
       "text": "breaking payments.ts::validateAmount: signature"
     }
   ],
-  "coupling": [],
+  "changed_behavior": [
+    {
+      "end_line": 10,
+      "line": 8,
+      "path": "payments.ts",
+      "qualname": "payments.ts::BaseProcessor.log",
+      "side": "head",
+      "text": "payments.ts::BaseProcessor.log \u00b7 added complexity 1"
+    },
+    {
+      "end_line": 30,
+      "line": 29,
+      "path": "payments.ts",
+      "qualname": "payments.ts::PaymentProcessor.status",
+      "side": "head",
+      "text": "payments.ts::PaymentProcessor.status \u00b7 added complexity 1"
+    },
+    {
+      "end_line": 37,
+      "line": 35,
+      "path": "payments.ts",
+      "qualname": "payments.ts::RecurringPaymentProcessor.chargeMonthly",
+      "side": "head",
+      "text": "payments.ts::RecurringPaymentProcessor.chargeMonthly \u00b7 added complexity 1"
+    },
+    {
+      "end_line": 4,
+      "line": 4,
+      "path": "payments.ts",
+      "qualname": "payments.ts::Gateway.status",
+      "side": "head",
+      "text": "payments.ts::Gateway.status \u00b7 added complexity 0"
+    },
+    {
+      "end_line": 15,
+      "line": 15,
+      "path": "payments.ts",
+      "qualname": "payments.ts::PaymentProcessor.retries",
+      "side": "head",
+      "text": "payments.ts::PaymentProcessor.retries \u00b7 added complexity 0"
+    },
+    {
+      "end_line": 11,
+      "line": 7,
+      "path": "payments.ts",
+      "qualname": "payments.ts::BaseProcessor",
+      "side": "head",
+      "text": "payments.ts::BaseProcessor \u00b7 added complexity 0"
+    },
+    {
+      "end_line": 38,
+      "line": 34,
+      "path": "payments.ts",
+      "qualname": "payments.ts::RecurringPaymentProcessor",
+      "side": "head",
+      "text": "payments.ts::RecurringPaymentProcessor \u00b7 added complexity 0"
+    }
+  ],
+  "coupling": [
+    "none"
+  ],
   "data_model": [],
+  "dropped": {
+    "pre-existing hotspot": 5
+  },
   "functions": [
     {
       "crap": {
         "band": "low",
-        "complexity": 1,
+        "complexity": 0,
         "coverage": 0.0,
         "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
+        "label": "CRAP 0",
+        "value": 0.0
       },
       "end_line": 42,
       "line": 40,
@@ -30,107 +94,51 @@
       "status": "modified"
     }
   ],
+  "generated_files": 0,
   "head": "after",
-  "risk": [
+  "hotspots": [
     {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
-      "end_line": 10,
-      "line": 8,
-      "name": "payments.ts::BaseProcessor.log",
-      "path": "payments.ts"
-    },
-    {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
       "end_line": 19,
       "line": 17,
-      "name": "payments.ts::PaymentProcessor.constructor",
-      "path": "payments.ts"
+      "path": "payments.ts",
+      "qualname": "payments.ts::PaymentProcessor.constructor",
+      "side": "head",
+      "text": "pre-existing payments.ts::PaymentProcessor.constructor \u00b7 hunk 4 lines"
     },
     {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
+      "end_line": 3,
+      "line": 3,
+      "path": "payments.ts",
+      "qualname": "payments.ts::Gateway.send",
+      "side": "head",
+      "text": "pre-existing payments.ts::Gateway.send \u00b7 hunk 2 lines"
+    },
+    {
       "end_line": 27,
       "line": 25,
-      "name": "payments.ts::PaymentProcessor.refund",
-      "path": "payments.ts"
+      "path": "payments.ts",
+      "qualname": "payments.ts::PaymentProcessor.refund",
+      "side": "head",
+      "text": "pre-existing payments.ts::PaymentProcessor.refund \u00b7 hunk 2 lines"
     },
     {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
-      "end_line": 23,
+      "end_line": 21,
       "line": 21,
-      "name": "payments.ts::PaymentProcessor.send",
-      "path": "payments.ts"
+      "path": "payments.ts",
+      "qualname": "payments.ts::PaymentProcessor.send",
+      "side": "head",
+      "text": "pre-existing payments.ts::PaymentProcessor.send \u00b7 hunk 2 lines"
     },
     {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
-      "end_line": 31,
-      "line": 29,
-      "name": "payments.ts::PaymentProcessor.status",
-      "path": "payments.ts"
-    },
-    {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
-      "end_line": 37,
-      "line": 35,
-      "name": "payments.ts::RecurringPaymentProcessor.chargeMonthly",
-      "path": "payments.ts"
-    },
-    {
-      "crap": {
-        "band": "low",
-        "complexity": 1,
-        "coverage": 0.0,
-        "coverage_supplied": false,
-        "label": "CRAP 2",
-        "value": 2.0
-      },
-      "end_line": 42,
+      "end_line": 40,
       "line": 40,
-      "name": "payments.ts::validateAmount",
-      "path": "payments.ts"
+      "path": "payments.ts",
+      "qualname": "payments.ts::validateAmount",
+      "side": "head",
+      "text": "pre-existing payments.ts::validateAmount \u00b7 hunk 2 lines"
     }
   ],
+  "schema": [],
   "stats": {
     "functions_added": 0,
     "functions_modified": 1,
@@ -179,7 +187,14 @@
       "line": 2,
       "members": [
         {
-          "crap": null,
+          "crap": {
+            "band": "low",
+            "complexity": 0,
+            "coverage": 0.0,
+            "coverage_supplied": false,
+            "label": "CRAP 0",
+            "value": 0.0
+          },
           "end_line": 3,
           "line": 3,
           "name": "send",
@@ -216,11 +231,11 @@
         {
           "crap": {
             "band": "low",
-            "complexity": 1,
+            "complexity": 0,
             "coverage": 0.0,
             "coverage_supplied": false,
-            "label": "CRAP 2",
-            "value": 2.0
+            "label": "CRAP 0",
+            "value": 0.0
           },
           "end_line": 19,
           "line": 17,
@@ -231,11 +246,11 @@
         {
           "crap": {
             "band": "low",
-            "complexity": 1,
+            "complexity": 0,
             "coverage": 0.0,
             "coverage_supplied": false,
-            "label": "CRAP 2",
-            "value": 2.0
+            "label": "CRAP 0",
+            "value": 0.0
           },
           "end_line": 27,
           "line": 25,
@@ -254,11 +269,11 @@
         {
           "crap": {
             "band": "low",
-            "complexity": 1,
+            "complexity": 0,
             "coverage": 0.0,
             "coverage_supplied": false,
-            "label": "CRAP 2",
-            "value": 2.0
+            "label": "CRAP 0",
+            "value": 0.0
           },
           "end_line": 23,
           "line": 21,
@@ -320,8 +335,14 @@
     }
   ],
   "untested": [
-    "payments.ts::BaseProcessor",
-    "payments.ts::RecurringPaymentProcessor"
+    {
+      "end_line": 3,
+      "line": 3,
+      "path": "payments.ts",
+      "qualname": "payments.ts",
+      "side": "head",
+      "text": "payments.ts has no sibling test"
+    }
   ],
   "violations": []
 }
