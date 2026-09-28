@@ -220,7 +220,7 @@ def cmd_demo(args: argparse.Namespace) -> int:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="skyline",
-        description="See how a change shapes the design, not just the lines.",
+        description="Review the design change in a pull request.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
