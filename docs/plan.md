@@ -83,7 +83,7 @@ After step 4 this resolver runs against the **full** as-built file set, not only
 - Walk all `.py` / `.ts` / `.tsx` at that ref (gitignore-aware via `git ls-files` at the ref, still restricted by `--lang`).
 - Write `model.json` (versioned IR of `{path: ModuleModel}`). Optional `--render` writes Mermaid and/or SVG. Never require hand-edits to `model.json`.
 - Document that the examined repo’s owner chooses gitignore vs check-in. Do not silently gitignore for him or her.
-- `skyline diff` may load `.skyline/model.json` for base if `--ref` matches and the file exists; otherwise extract.
+- `skyline diff` loads `.skyline/maps/<sha>.json` for `--base` and for `--head` when that file was written for the same commit sha. A `model.json` whose stored sha matches is used the same way. A matching ref name with a different sha is not reused. Otherwise `diff` extracts and writes the sha map.
 
 **Tests**
 

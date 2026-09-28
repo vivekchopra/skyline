@@ -117,7 +117,7 @@ skyline snapshot --repo <path> --ref HEAD [--out-dir .skyline] [--render]
 - `--coverage`: optional path to a coverage map JSON file (see [Coverage input](#coverage-input)); without it, every method or function is scored assuming 0% coverage
 - `--policy`: path to `skyline.policy.toml` (default: `<repo>/skyline.policy.toml`). A missing file draws no illegal edges
 - `--fail-on-violation`: exit 1 when this change introduces a policy violation. Off unless you pass it. Does not fail on CRAP
-- `--snapshot-dir`: where a previous `model.json` lives (default: `.skyline`). `diff` uses it when the ref matches, and extracts otherwise
+- `--snapshot-dir`: where previous maps live (default: `.skyline`). `diff` reuses `maps/<sha>.json` when the commit sha matches, and extracts otherwise
 - `snapshot --ref`: git ref to map (default: `HEAD`)
 - `snapshot --out-dir`: output directory (default: `.skyline`; `docs/architecture` if you want the render under `docs/`)
 - `snapshot --render`: also write `map.md` and `map.svg`. The JSON model stays the IR
@@ -151,7 +151,7 @@ Same-rank imports are allowed unless you set `same_rank = false`. An explicit ex
 
 ## How it works
 
-1. At `--base` and at `--head`, list tracked `.py`, `.ts`, `.tsx`, and `.prisma` files (`git ls-tree`) and read them with `git show`, without touching the working tree. If `.skyline/model.json` was generated for that same ref, load it instead of extracting again.
+1. At `--base` and at `--head`, list tracked `.py`, `.ts`, `.tsx`, and `.prisma` files (`git ls-tree`) and read them with `git show`, without touching the working tree. If `.skyline/maps/<sha>.json` was written for that commit, load it and skip the extract. A `model.json` is used only when its stored sha is that commit.
 2. Parse both trees into one language-agnostic model: Python via `ast`, TypeScript via the TypeScript compiler API (see [TypeScript support](#typescript-support)), Prisma `model` blocks via a small scanner. All of them produce `ModuleModel` (types, members, functions, imports, tables).
 3. Diff the two models: signatures, heritage, decorators, complexity, body hash, resolved imports, and declared tables.
 4. If `skyline.policy.toml` is present, mark new illegal edges, new types sitting in the wrong layer for what they import, and new cycles that cross layers.
